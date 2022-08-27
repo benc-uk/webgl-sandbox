@@ -13,7 +13,7 @@ window.onload = () => {
     return
   }
 
-  // Two very simple shaders
+  // Two very simple shaders, embedded inline
   const vertShaderSource = `
     attribute vec4 aVertexPosition;
     void main(void) {
