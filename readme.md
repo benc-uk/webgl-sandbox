@@ -4,12 +4,15 @@ Some experiments and learning with WebGL
 
 ## Contents
 
+These should run straight from GitHub Pages here http://code.benco.io/webgl-sandbox/ which is kinda neat :)
+
 - [hello-world](./hello-world/) - About as simple as it gets, show a red 2D triangle
 - [hue-square](./hue-square/) - A 2D square with color interpolation and shifting colors
+- [cube](./cube/) - A spinning 3D cube with coloured sides
 
 ## Helper Library
 
-The module `gl-utils.mjs` is a general purpose helper library used to make life with WebGL a tiny bit easier
+The module [gl-utils.mjs](./lib/gl-utils.mjs) is a general purpose helper library used to make life with WebGL a tiny bit easier
 
 # Running
 
