@@ -73,6 +73,8 @@ window.onload = async () => {
 }
 
 //
+// Create the instance data for the cubes
+//
 function setupInstances(count) {
   let instanceData = []
   for (let i = 0; i < count; ++i) {
@@ -80,7 +82,7 @@ function setupInstances(count) {
     const y = Math.random() * 20
     const z = Math.random() * 80
     const speed = Math.random() * 3
-    const hueShift = Math.random() * 1120
+    const hueShift = Math.random() * 50
     instanceData.push({ hueShift, speed, x, y, z })
   }
   return instanceData
@@ -133,5 +135,5 @@ function drawScene(gl, programInfo, bufferInfo, deltaTime, instanceData) {
   }
 
   cubeRotation += deltaTime
-  setOverlay(`${instanceData.length} Cubes &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(1 / deltaTime)})`)
+  setOverlay(`There are ${instanceData.length} Cubes &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(1 / deltaTime)})`)
 }
