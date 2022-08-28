@@ -11,6 +11,12 @@ let cubeRotation = 0.0
 window.onload = async () => {
   canvas = document.querySelector('canvas')
   const gl = canvas.getContext('webgl2')
+  let instanceData = []
+
+  document.querySelector('#cubeCount').addEventListener('change', (e) => {
+    console.log(e.target.value)
+    instanceData = setupInstances(e.target.value)
+  })
 
   // If we don't have a GL context, give up now
   if (!gl) {
@@ -49,15 +55,7 @@ window.onload = async () => {
   }
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays)
 
-  let instanceData = []
-  for (let i = 0; i < 250; ++i) {
-    const x = Math.random() * 30
-    const y = Math.random() * 20
-    const z = Math.random() * 80
-    const speed = Math.random() * 3
-    const hueShift = Math.random() * 1120
-    instanceData.push({ hueShift, speed, x, y, z })
-  }
+  instanceData = setupInstances(250)
 
   // Draw the scene repeatedly every frame
   var prevTime = 0
@@ -74,6 +72,19 @@ window.onload = async () => {
   requestAnimationFrame(render)
 }
 
+//
+function setupInstances(count) {
+  let instanceData = []
+  for (let i = 0; i < count; ++i) {
+    const x = Math.random() * 30
+    const y = Math.random() * 20
+    const z = Math.random() * 80
+    const speed = Math.random() * 3
+    const hueShift = Math.random() * 1120
+    instanceData.push({ hueShift, speed, x, y, z })
+  }
+  return instanceData
+}
 //
 // Draw the scene.
 //

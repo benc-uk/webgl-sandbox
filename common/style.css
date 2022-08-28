@@ -23,6 +23,18 @@ canvas {
   border-radius: 5px;
 }
 
+#controls {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  color: rgb(255, 255, 255);
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  font-size: 1.5rem;
+  padding: 0.6rem;
+  background-color: rgba(50, 50, 50, 0.7);
+  border-radius: 5px;
+}
+
 .relative-container {
   position: relative;
 }

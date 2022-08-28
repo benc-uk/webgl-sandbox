@@ -1,4 +1,4 @@
-import { fetchShaders, initShaderProgram, resizeCanvasToDisplaySize, setOverlay } from '../lib/gl-utils.mjs'
+import { fetchShaders, initShaderProgram, resizeCanvasToDisplaySize, setOverlay, oscillate } from '../lib/gl-utils.mjs'
 import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 let canvas = null
@@ -159,12 +159,4 @@ function drawScene(gl, programInfo, buffers, now) {
   requestAnimationFrame((now) => {
     drawScene(gl, programInfo, buffers, now)
   })
-}
-
-//
-// Helper function to bounce a value between two limits
-//
-function oscillate(input, min, max) {
-  let range = max - min
-  return min + Math.abs(((input + range) % (range * 2)) - range)
 }
