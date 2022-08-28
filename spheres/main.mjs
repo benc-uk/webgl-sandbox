@@ -3,7 +3,7 @@ import * as twgl from 'https://cdnjs.cloudflare.com/ajax/libs/twgl.js/4.19.5/twg
 import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 let canvas = null
-let cubeRotation = 0.0
+let animOffset = 0.0
 
 //
 // Start here :D
@@ -13,8 +13,7 @@ window.onload = async () => {
   const gl = canvas.getContext('webgl2')
   let instanceData = []
 
-  document.querySelector('#cubeCount').addEventListener('change', (e) => {
-    console.log(e.target.value)
+  document.querySelector('#sphereCount').addEventListener('change', (e) => {
     instanceData = setupInstances(e.target.value)
   })
 
@@ -36,24 +35,7 @@ window.onload = async () => {
     return
   }
 
-  // Randomize the color of the cube
-  let color = []
-  for (var face = 0; face < 6; ++face) {
-    const c1 = [Math.random(), Math.random(), Math.random(), 1.0]
-    const c2 = [Math.random(), Math.random(), Math.random(), 1.0]
-    const c3 = [Math.random(), Math.random(), Math.random(), 1.0]
-    const c4 = [Math.random(), Math.random(), Math.random(), 1.0]
-    color = color.concat(c1, c2, c3, c4)
-  }
-
-  // prettier-ignore
-  const arrays = {
-    position: [ 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1 ],
-    normal: [ 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1 ],
-    indices: [ 0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23 ],
-    color,
-  }
-  const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays)
+  const bufferInfo = twgl.primitives.createSphereBufferInfo(gl, 1, 36, 24)
 
   instanceData = setupInstances(250)
 
@@ -73,7 +55,7 @@ window.onload = async () => {
 }
 
 //
-// Create the instance data for the cubes
+// Create the instance data for the objects
 //
 function setupInstances(count) {
   let instanceData = []
@@ -81,9 +63,9 @@ function setupInstances(count) {
     const x = Math.random() * 30
     const y = Math.random() * 20
     const z = Math.random() * 80
-    const speed = Math.random() * 3
-    const hueShift = Math.random() * 50
-    instanceData.push({ hueShift, speed, x, y, z })
+    const scale = Math.random() * 1.2 + 0.3
+    const color = [Math.random(), Math.random(), Math.random(), 1.0]
+    instanceData.push({ color, scale, x, y, z })
   }
   return instanceData
 }
@@ -105,12 +87,10 @@ function drawScene(gl, programInfo, bufferInfo, deltaTime, instanceData) {
   for (let instance of instanceData) {
     const modelViewMatrix = mat4.create()
     mat4.translate(modelViewMatrix, modelViewMatrix, [-15 + instance.x, -10 + instance.y, -90 + instance.z])
-    mat4.rotate(modelViewMatrix, modelViewMatrix, instance.speed * cubeRotation * -0.93, [0, 1, 0])
-    mat4.rotate(modelViewMatrix, modelViewMatrix, instance.speed * cubeRotation * 0.72, [1, 0, 0])
-    mat4.rotate(modelViewMatrix, modelViewMatrix, instance.speed * cubeRotation * 0.11, [0, 0, 1])
+    mat4.scale(modelViewMatrix, modelViewMatrix, [instance.scale, instance.scale, instance.scale])
 
     const worldMatrix = mat4.create()
-    mat4.translate(worldMatrix, worldMatrix, [0, 0, oscillate(cubeRotation * 16, -15, 50)])
+    mat4.translate(worldMatrix, worldMatrix, [0, 0, oscillate(animOffset * 16, -15, 50)])
 
     // The inverse-transpose of the modelViewMatrix is used to transform normals
     // The reason this works & is needed, are WAY beyond the scope of this code!
@@ -125,15 +105,15 @@ function drawScene(gl, programInfo, bufferInfo, deltaTime, instanceData) {
       u_projectionMatrix: projectionMatrix,
       u_normalMatrix: normalMatrix,
       u_worldMatrix: worldMatrix,
-      u_lightWorldPos: [7, 2, 8],
+      u_lightWorldPos: [17, 16, 5],
       u_lightColor: [1, 1, 1],
       u_lightAmbient: [0.1, 0.1, 0.1],
-      u_hueShift: instance.hueShift,
+      u_sphereColor: instance.color,
     })
 
     twgl.drawBufferInfo(gl, bufferInfo)
   }
 
-  cubeRotation += deltaTime
-  setOverlay(`Rendering ${instanceData.length} Cubes &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(1 / deltaTime)})`)
+  animOffset += deltaTime
+  setOverlay(`Rendering ${instanceData.length} Spheres &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(1 / deltaTime)})`)
 }
