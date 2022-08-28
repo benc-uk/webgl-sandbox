@@ -1,4 +1,4 @@
-import { fetchShaders, setOverlay } from '../lib/gl-utils.mjs'
+import { fetchShaders, setOverlay, oscillate } from '../lib/gl-utils.mjs'
 import * as twgl from 'https://cdnjs.cloudflare.com/ajax/libs/twgl.js/4.19.5/twgl-full.module.js'
 import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
@@ -49,6 +49,16 @@ window.onload = async () => {
   }
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays)
 
+  let instanceData = []
+  for (let i = 0; i < 250; ++i) {
+    const x = Math.random() * 30
+    const y = Math.random() * 20
+    const z = Math.random() * 80
+    const speed = Math.random() * 3
+    const hueShift = Math.random() * 1120
+    instanceData.push({ hueShift, speed, x, y, z })
+  }
+
   // Draw the scene repeatedly every frame
   var prevTime = 0
   async function render(now) {
@@ -56,7 +66,7 @@ window.onload = async () => {
     const deltaTime = now - prevTime // Get smoothed time difference
     prevTime = now
 
-    drawScene(gl, programInfo, bufferInfo, deltaTime)
+    drawScene(gl, programInfo, bufferInfo, deltaTime, instanceData)
     requestAnimationFrame(render)
   }
 
@@ -67,7 +77,7 @@ window.onload = async () => {
 //
 // Draw the scene.
 //
-function drawScene(gl, programInfo, bufferInfo, deltaTime) {
+function drawScene(gl, programInfo, bufferInfo, deltaTime, instanceData) {
   twgl.resizeCanvasToDisplaySize(gl.canvas)
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
@@ -77,33 +87,40 @@ function drawScene(gl, programInfo, bufferInfo, deltaTime) {
 
   // Create a perspective matrix for the camera
   const projectionMatrix = mat4.create()
-  mat4.perspective(projectionMatrix, (45 * Math.PI) / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, 100)
+  mat4.perspective(projectionMatrix, (45 * Math.PI) / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 100)
 
-  const modelViewMatrix = mat4.create()
-  mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -6])
-  mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation * -0.93, [0, 1, 0])
-  mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation * 0.72, [1, 0, 0])
-  mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation * 0.11, [0, 0, 1])
+  for (let instance of instanceData) {
+    const modelViewMatrix = mat4.create()
+    mat4.translate(modelViewMatrix, modelViewMatrix, [-15 + instance.x, -10 + instance.y, -90 + instance.z])
+    mat4.rotate(modelViewMatrix, modelViewMatrix, instance.speed * cubeRotation * -0.93, [0, 1, 0])
+    mat4.rotate(modelViewMatrix, modelViewMatrix, instance.speed * cubeRotation * 0.72, [1, 0, 0])
+    mat4.rotate(modelViewMatrix, modelViewMatrix, instance.speed * cubeRotation * 0.11, [0, 0, 1])
 
-  // The inverse-transpose of the modelViewMatrix is used to transform normals
-  // The reason this works & is needed, are WAY beyond the scope of this code!
-  const normalMatrix = mat4.create()
-  mat4.invert(normalMatrix, modelViewMatrix)
-  mat4.transpose(normalMatrix, normalMatrix)
+    const worldMatrix = mat4.create()
+    mat4.translate(worldMatrix, worldMatrix, [0, 0, oscillate(cubeRotation * 16, -15, 50)])
 
-  gl.useProgram(programInfo.program)
-  twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo)
-  twgl.setUniforms(programInfo, {
-    u_modelViewMatrix: modelViewMatrix,
-    u_projectionMatrix: projectionMatrix,
-    u_normalMatrix: normalMatrix,
-    u_lightWorldPos: [7, 2, 8],
-    u_lightColor: [1, 1, 1],
-    u_lightAmbient: [0.2, 0.2, 0.2],
-  })
+    // The inverse-transpose of the modelViewMatrix is used to transform normals
+    // The reason this works & is needed, are WAY beyond the scope of this code!
+    const normalMatrix = mat4.create()
+    mat4.invert(normalMatrix, modelViewMatrix)
+    mat4.transpose(normalMatrix, normalMatrix)
 
-  gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0)
+    gl.useProgram(programInfo.program)
+    twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo)
+    twgl.setUniforms(programInfo, {
+      u_modelViewMatrix: modelViewMatrix,
+      u_projectionMatrix: projectionMatrix,
+      u_normalMatrix: normalMatrix,
+      u_worldMatrix: worldMatrix,
+      u_lightWorldPos: [7, 2, 8],
+      u_lightColor: [1, 1, 1],
+      u_lightAmbient: [0.2, 0.2, 0.2],
+      u_hueShift: instance.hueShift,
+    })
+
+    gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0)
+  }
 
   cubeRotation += deltaTime
-  setOverlay(`TWGL Simple Lit Cube &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(1 / deltaTime)})`)
+  setOverlay(`${instanceData.length} Cubes &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(1 / deltaTime)})`)
 }
