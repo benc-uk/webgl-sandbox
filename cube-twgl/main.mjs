@@ -78,7 +78,7 @@ function drawScene(gl, programInfo, bufferInfo, deltaTime) {
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
   gl.enable(gl.DEPTH_TEST)
-  gl.enable(gl.CULL_FACE)
+  //gl.enable(gl.CULL_FACE)
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
   // Create a perspective matrix for the camera
@@ -104,16 +104,15 @@ function drawScene(gl, programInfo, bufferInfo, deltaTime) {
   mat4.transpose(normalMatrix, normalMatrix)
 
   gl.useProgram(programInfo.program)
-  let uniforms = {
+  twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo)
+  twgl.setUniforms(programInfo, {
     u_modelViewMatrix: modelViewMatrix,
     u_projectionMatrix: projectionMatrix,
     u_normalMatrix: normalMatrix,
     u_lightWorldPos: [7, 2, 8],
     u_lightColor: [1, 1, 1],
     u_lightAmbient: [0.2, 0.2, 0.2],
-  }
-  twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo)
-  twgl.setUniforms(programInfo, uniforms)
+  })
   gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0)
 
   cubeRotation += deltaTime
