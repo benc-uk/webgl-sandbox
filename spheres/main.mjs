@@ -1,4 +1,4 @@
-import { fetchShaders, setOverlay, resizeCanvasToDisplaySize } from '../lib/gl-utils.mjs'
+import { fetchShaders, setOverlay } from '../lib/gl-utils.mjs'
 import * as twgl from 'https://cdnjs.cloudflare.com/ajax/libs/twgl.js/4.19.5/twgl-full.module.js'
 import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
@@ -42,7 +42,7 @@ window.onload = async () => {
   }
 
   const bufferInfo = twgl.primitives.createSphereBufferInfo(gl, 1, SPHERE_DIV, SPHERE_DIV)
-  instanceData = setupInstances(1500)
+  instanceData = setupInstances(document.querySelector('#count').value)
 
   const uniforms = {
     u_worldInverseTranspose: mat4.create(),
@@ -68,7 +68,6 @@ window.onload = async () => {
   const frameTimes = []
   let frameCursor = 0
   let numFrames = 0
-  const maxFrames = 20
   let totalFPS = 0
 
   // Draw the scene repeatedly every frame
@@ -83,7 +82,7 @@ window.onload = async () => {
     totalFPS += fps - (frameTimes[frameCursor] || 0)
     frameTimes[frameCursor++] = fps
     numFrames = Math.max(numFrames, frameCursor)
-    frameCursor %= maxFrames
+    frameCursor %= 20
     const averageFPS = totalFPS / numFrames
     setOverlay(`${instanceData.length} Spheres! &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(averageFPS)})`)
 
@@ -127,7 +126,7 @@ function drawScene(gl, programInfo, bufferInfo, uniforms, view, deltaTime, insta
     const world = mat4.create()
     mat4.translate(world, world, [instance.x, instance.y, instance.z])
     mat4.translate(world, world, [xMove, yMove, 0])
-
+    // Resize and add world matrix to the uniforms
     const reScale = document.querySelector('#size').value / 50
     mat4.scale(world, world, [instance.scale * reScale, instance.scale * reScale, instance.scale * reScale])
     uniforms.u_world = world
@@ -145,10 +144,12 @@ function drawScene(gl, programInfo, bufferInfo, uniforms, view, deltaTime, insta
 
     twgl.drawBufferInfo(gl, bufferInfo)
 
+    // Move the instance towards the camera
     instance.z += deltaTime * speed
   }
 
   // Remove spheres that are past the near clip plane
+  // Have to do this in separate loop as we are modifying the array in place
   for (let i in instanceData) {
     const instance = instanceData[i]
     if (instance.z > 0.1) {
