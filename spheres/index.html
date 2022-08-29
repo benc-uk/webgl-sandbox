@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>WebGL Sandbox: Many Spheres</title>
+    <title>WebGL Sandbox: Spheres!</title>
     <link rel="stylesheet" href="../common/style.css" type="text/css" />
     <link rel="shortcut icon" href="../common/icon.png" type="image/png" />
     <script src="main.mjs" type="module"></script>
@@ -10,10 +10,13 @@
 
   <body>
     <canvas></canvas>
-    <div id="overlay">Many Spheres</div>
+    <div id="overlay">Spheres!</div>
     <div id="controls">
-      <label for="sphereCount">Sphere Count</label>
-      <input type="range" name="sphereCount" id="sphereCount" max="3000" min="50" value="200" />
+      <label for="count">Count</label>
+      <input type="range" name="count" id="count" max="6000" min="100" value="1500" />
+      <br />
+      <label for="speed">Speed</label>
+      <input type="range" name="speed" id="speed" max="200" min="2" value="40" />
     </div>
   </body>
 </html>
