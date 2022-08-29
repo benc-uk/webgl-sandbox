@@ -10,7 +10,6 @@ These should run straight from GitHub Pages here http://code.benco.io/webgl-sand
 - [hue-square](./hue-square/) - A 2D square with color interpolation and shifting colors
 - [cube](./cube/) - A spinning 3D cube with coloured sides
 - [cube-twgl](./cube-twgl/) - A spinning 3D cube with coloured sides & shading. Using [TWGL](https://twgljs.org/) helper library
-- [cube-many](./cube-many/) - Lots of spinning 3D cubes
 - [spheres](./spheres/) - Lots of spheres, with specular Blinn-Phong shading
 
 ## Helper Library
