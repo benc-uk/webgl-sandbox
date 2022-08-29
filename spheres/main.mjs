@@ -7,7 +7,7 @@ let xMoveAmount = Math.random() * 2
 let yMoveAmount = Math.random() * 2
 
 const FOV = 45
-const FAR_CLIP = 500
+const FAR_CLIP = 700
 const SPHERE_DIV = 12
 
 //
@@ -85,7 +85,7 @@ window.onload = async () => {
     numFrames = Math.max(numFrames, frameCursor)
     frameCursor %= maxFrames
     const averageFPS = totalFPS / numFrames
-    setOverlay(`${instanceData.length} Spheres &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(averageFPS)})`)
+    setOverlay(`${instanceData.length} Spheres! &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(averageFPS)})`)
 
     drawScene(gl, programInfo, bufferInfo, uniforms, view, deltaTime, instanceData)
     requestAnimationFrame(render)

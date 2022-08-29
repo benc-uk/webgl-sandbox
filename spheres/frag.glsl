@@ -1,4 +1,4 @@
-precision mediump float;
+precision highp float;
 
 varying vec4 v_position;
 varying vec3 v_normal;

@@ -1,4 +1,4 @@
-precision mediump float;
+precision highp float;
 
 uniform mat4 u_worldViewProjection;
 uniform mat4 u_world;
