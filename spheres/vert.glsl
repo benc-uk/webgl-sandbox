@@ -8,13 +8,15 @@ uniform vec3 u_lightColor;
 uniform vec3 u_lightAmbient;
 uniform mat4 u_worldMatrix;
 uniform float u_hueShift;
+uniform mat4 u_modelViewMatrixInv;
 
 attribute vec4 position;
 attribute vec4 color;
 attribute vec3 normal;
 
 // varying to pass to fragment shader
-varying highp vec3 v_lighting;
+varying vec3 v_lighting;
+varying vec4 v_pos;
 
 void main() {
   // Standard diffuse directional lighting
@@ -23,5 +25,7 @@ void main() {
   highp float intensity = clamp(dot(transformedNormal.xyz, lightVector), 0.0, 1.0);
 
   v_lighting = u_lightAmbient + (u_lightColor * intensity);
-  gl_Position = u_projectionMatrix * u_worldMatrix * u_modelViewMatrix * position;
+  vec4 v_pos_temp = u_worldMatrix * u_modelViewMatrix * position;
+  v_pos = u_modelViewMatrixInv * v_pos_temp;
+  gl_Position = u_projectionMatrix * v_pos_temp;
 }

@@ -92,6 +92,9 @@ function drawScene(gl, programInfo, bufferInfo, deltaTime, instanceData) {
     const worldMatrix = mat4.create()
     mat4.translate(worldMatrix, worldMatrix, [0, 0, oscillate(animOffset * 16, -15, 50)])
 
+    const modelViewMatrixInv = mat4.create()
+    mat4.invert(modelViewMatrixInv, worldMatrix)
+
     // The inverse-transpose of the modelViewMatrix is used to transform normals
     // The reason this works & is needed, are WAY beyond the scope of this code!
     const normalMatrix = mat4.create()
@@ -102,9 +105,11 @@ function drawScene(gl, programInfo, bufferInfo, deltaTime, instanceData) {
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo)
     twgl.setUniforms(programInfo, {
       u_modelViewMatrix: modelViewMatrix,
+      u_modelViewMatrixInv: modelViewMatrixInv,
       u_projectionMatrix: projectionMatrix,
       u_normalMatrix: normalMatrix,
       u_worldMatrix: worldMatrix,
+
       u_lightWorldPos: [17, 16, 5],
       u_lightColor: [1, 1, 1],
       u_lightAmbient: [0.1, 0.1, 0.1],
