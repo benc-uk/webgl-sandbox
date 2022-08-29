@@ -2,20 +2,25 @@ import { fetchShaders, setOverlay, resizeCanvasToDisplaySize } from '../lib/gl-u
 import * as twgl from 'https://cdnjs.cloudflare.com/ajax/libs/twgl.js/4.19.5/twgl-full.module.js'
 import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
-let speed = 40
+let increaser = 0
+let xMoveAmount = Math.random() * 2
+let yMoveAmount = Math.random() * 2
+
+const FOV = 45
+const FAR_CLIP = 500
+const SPHERE_DIV = 12
 
 //
 // Start here :D
 //
 window.onload = async () => {
   const gl = document.querySelector('canvas').getContext('webgl2')
+
   let instanceData = []
 
+  // For UI controls to allow some values to be changed
   document.querySelector('#count').addEventListener('change', (e) => {
     instanceData = setupInstances(e.target.value)
-  })
-  document.querySelector('#speed').addEventListener('change', (e) => {
-    speed = e.target.value
   })
 
   // If we don't have a GL context, give up now
@@ -36,18 +41,7 @@ window.onload = async () => {
     return
   }
 
-  // Randomize the color of the cube
-  let color = []
-  for (var face = 0; face < 6; ++face) {
-    const c1 = [Math.random(), Math.random(), Math.random(), 1.0]
-    const c2 = [Math.random(), Math.random(), Math.random(), 1.0]
-    const c3 = [Math.random(), Math.random(), Math.random(), 1.0]
-    const c4 = [Math.random(), Math.random(), Math.random(), 1.0]
-    color = color.concat(c1, c2, c3, c4)
-  }
-
-  const bufferInfo = twgl.primitives.createSphereBufferInfo(gl, 1, 36, 24)
-
+  const bufferInfo = twgl.primitives.createSphereBufferInfo(gl, 1, SPHERE_DIV, SPHERE_DIV)
   instanceData = setupInstances(1500)
 
   const uniforms = {
@@ -55,13 +49,13 @@ window.onload = async () => {
     u_worldViewProjection: mat4.create(),
 
     // Move light somewhere in the world
-    u_lightWorldPos: [10, 14, 3],
+    u_lightWorldPos: [document.querySelector('#light').value, 14, 3],
     u_lightColor: [1, 1, 1, 1],
-    u_lightAmbient: [0.1, 0.1, 0.1],
 
-    u_diffuseMult: [1, 1, 1, 1],
+    u_diffuseMult: [0.8, 0.8, 0.8, 1],
+    u_lightAmbient: [0.1, 0.1, 0.1, 1],
     u_specular: [1, 1, 1, 1],
-    u_shininess: 23,
+    u_shininess: 50,
     u_specularFactor: 0.8,
   }
 
@@ -71,12 +65,27 @@ window.onload = async () => {
   mat4.invert(view, camera)
   uniforms.u_viewInverse = camera // Add the view inverse to the uniforms, we need it for shading
 
+  const frameTimes = []
+  let frameCursor = 0
+  let numFrames = 0
+  const maxFrames = 20
+  let totalFPS = 0
+
   // Draw the scene repeatedly every frame
   var prevTime = 0
   async function render(now) {
     now *= 0.001
     const deltaTime = now - prevTime // Get smoothed time difference
     prevTime = now
+
+    // All of this is FPS calculation
+    const fps = 1 / deltaTime
+    totalFPS += fps - (frameTimes[frameCursor] || 0)
+    frameTimes[frameCursor++] = fps
+    numFrames = Math.max(numFrames, frameCursor)
+    frameCursor %= maxFrames
+    const averageFPS = totalFPS / numFrames
+    setOverlay(`${instanceData.length} Spheres &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(averageFPS)})`)
 
     drawScene(gl, programInfo, bufferInfo, uniforms, view, deltaTime, instanceData)
     requestAnimationFrame(render)
@@ -87,26 +96,19 @@ window.onload = async () => {
 }
 
 //
-// Create the instance data for the objects
-//
-function setupInstances(count) {
-  let instanceData = []
-  for (let i = 0; i < count; ++i) {
-    addInstance(instanceData, 300)
-  }
-  return instanceData
-}
-
-//
 // Draw the scene.
 //
 function drawScene(gl, programInfo, bufferInfo, uniforms, view, deltaTime, instanceData) {
+  increaser += deltaTime
+  const speed = document.querySelector('#speed').value
+  uniforms.u_lightWorldPos = [document.querySelector('#light').value, 14, 3]
+
   twgl.resizeCanvasToDisplaySize(gl.canvas)
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
   // Do this in every frame since the window and therefore the aspect ratio of projection matrix might change
   const perspective = mat4.create()
-  mat4.perspective(perspective, (50 * Math.PI) / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, 300)
+  mat4.perspective(perspective, (FOV * Math.PI) / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, FAR_CLIP)
   const viewProjection = mat4.create()
   mat4.multiply(viewProjection, perspective, view)
 
@@ -114,15 +116,20 @@ function drawScene(gl, programInfo, bufferInfo, uniforms, view, deltaTime, insta
   gl.enable(gl.CULL_FACE)
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-  for (let i in instanceData) {
-    const instance = instanceData[i]
+  // Add some movement
+  const yMove = Math.sin(increaser * yMoveAmount) * 4
+  const xMove = Math.sin(increaser * xMoveAmount) * 15
+
+  for (let instance of instanceData) {
     uniforms.u_sphereColor = instance.color
 
     // Move object into the world
     const world = mat4.create()
-
     mat4.translate(world, world, [instance.x, instance.y, instance.z])
-    mat4.scale(world, world, [instance.scale, instance.scale, instance.scale])
+    mat4.translate(world, world, [xMove, yMove, 0])
+
+    const reScale = document.querySelector('#size').value / 50
+    mat4.scale(world, world, [instance.scale * reScale, instance.scale * reScale, instance.scale * reScale])
     uniforms.u_world = world
 
     // Populate u_worldInverseTranspose - used for normals & shading
@@ -141,22 +148,39 @@ function drawScene(gl, programInfo, bufferInfo, uniforms, view, deltaTime, insta
     instance.z += deltaTime * speed
   }
 
+  // Remove spheres that are past the near clip plane
   for (let i in instanceData) {
     const instance = instanceData[i]
-    if (instance.z > 2) {
+    if (instance.z > 0.1) {
       instanceData.splice(i, 1)
       addInstance(instanceData)
+
+      // Uncomment this for exponential sphere growth!
+      //addInstance(instanceData)
     }
   }
-
-  setOverlay(`${instanceData.length} Spheres &nbsp;&nbsp;&nbsp; (FPS: ${Math.round(1 / deltaTime)})`)
 }
 
+//
+// Add a new instance to the array,
+// spread is used to determine the range of z position
+//
 function addInstance(instanceData, spread = 40) {
   const x = -50 + Math.random() * 100
   const y = -40 + Math.random() * 80
-  const z = -300 + Math.random() * spread
+  const z = -FAR_CLIP + Math.random() * spread
   const scale = Math.random() * 1.4 + 0.2
   const color = [Math.random(), Math.random(), Math.random(), 1.0]
   instanceData.push({ color, scale, x, y, z })
+}
+
+//
+// Create the instance data for the objects
+//
+function setupInstances(count) {
+  let instanceData = []
+  for (let i = 0; i < count; ++i) {
+    addInstance(instanceData, FAR_CLIP)
+  }
+  return instanceData
 }

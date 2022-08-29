@@ -49,3 +49,13 @@ canvas {
 video {
   display: none;
 }
+
+label {
+  color: rgb(19, 189, 219);
+}
+
+input[type='range'] {
+  margin: 0.5rem 0rem 2rem 0rem;
+  display: block;
+  width: 10rem;
+}
