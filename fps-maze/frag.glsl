@@ -33,13 +33,13 @@ void main(void) {
 
   vec2 lighting = lit(dot(a_normal, surfaceToLight), dot(a_normal, halfVector), u_shininess);
   
-  float attenuation = 1.0 / (1.0 + v_lightDist * v_lightDist * 0.02);
-  diffuseColor = diffuseColor * attenuation;
+  float attenuation = 1.0 / (1.0 + 1.6 * v_lightDist + 1.9 * (v_lightDist * v_lightDist));
+  attenuation = clamp(attenuation * 1000.0, 0.0, 1.0);
 
   vec4 outColor = vec4(
-    (diffuseColor * u_lightAmbient + (u_lightColor * (diffuseColor * lighting.x + u_specular * lighting.y * u_specularFactor*attenuation))).rgb, 
+    (diffuseColor * u_lightAmbient + (u_lightColor * (diffuseColor * lighting.x + u_specular * lighting.y * u_specularFactor * attenuation))).rgb, 
     diffuseColor.a
   );
 
-  gl_FragColor = outColor; 
+  gl_FragColor = attenuation * outColor; 
 }

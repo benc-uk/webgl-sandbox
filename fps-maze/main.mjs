@@ -1,7 +1,8 @@
 import { fetchShaders, setOverlay } from '../lib/gl-utils.mjs'
 import * as twgl from 'https://cdnjs.cloudflare.com/ajax/libs/twgl.js/4.19.5/twgl-full.module.js'
 import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
-import * as vec3 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/vec3.js'
+
+import { map } from './map.mjs'
 
 const FOV = 45
 const FAR_CLIP = 100
@@ -32,10 +33,10 @@ window.onload = async () => {
     return
   }
 
-  const wallsBufferInfo = twgl.primitives.createCubeBufferInfo(gl, 1)
-  const floorBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, 7, 7)
-  const wallInstanceData = setupInstances(500, 0)
-  const floorInstanceData = setupInstances(100, -0.5)
+  const wallsBufferInfo = twgl.primitives.createCubeBufferInfo(gl, 10)
+  const floorBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, 10, 10)
+  const wallInstanceData = wallInstances(10, 1)
+  const floorInstanceData = wallInstances(10, 0)
 
   const wallTexture = twgl.createTexture(gl, {
     src: 'textures/STARG2.png',
@@ -62,7 +63,7 @@ window.onload = async () => {
   }
 
   camera = mat4.create()
-  mat4.targetTo(camera, [0, 0, 1], [0, 0, 0], [0, 1, 0])
+  mat4.targetTo(camera, [30, 0, 30], [40, 0, 30], [0, 1, 0])
 
   // Draw the scene repeatedly every frame
   var prevTime = 0
@@ -127,25 +128,24 @@ function drawScene(gl, programInfo, bufferInfo, uniforms, _, instanceData) {
 }
 
 //
-// Add a new instance to the array,
-// spread is used to determine the range of z position
-//
-function addInstance(instanceData, yi = 0) {
-  const x = -40 + Math.random() * 80
-  const y = yi
-  const z = -40 + Math.random() * 80
-  instanceData.push({ x, y, z })
-}
-
-//
 // Create the instance data for the objects
 //
-function setupInstances(count, yi) {
-  console.log('setupInstances', count, yi)
+function wallInstances(size, t) {
   let instanceData = []
-  for (let i = 0; i < count; ++i) {
-    addInstance(instanceData, yi)
+
+  // loop over map
+  for (let y = 0; y < map.length; y++) {
+    for (let x = 0; x < map[y].length; x++) {
+      if (map[y][x] === t) {
+        instanceData.push({
+          x: x * size,
+          y: t == 0 ? -5 : 0,
+          z: y * size,
+        })
+      }
+    }
   }
+
   return instanceData
 }
 
@@ -166,19 +166,19 @@ function initInput() {
 //
 function handleInputs(uniforms) {
   if (inputMap['w']) {
-    mat4.translate(camera, camera, [0, 0, -0.15])
+    mat4.translate(camera, camera, [0, 0, -0.7])
   }
 
   if (inputMap['s']) {
-    mat4.translate(camera, camera, [0, 0, 0.15])
+    mat4.translate(camera, camera, [0, 0, 0.7])
   }
 
   if (inputMap['q']) {
-    mat4.translate(camera, camera, [-0.1, 0, 0])
+    mat4.translate(camera, camera, [-0.5, 0, 0])
   }
 
   if (inputMap['e']) {
-    mat4.translate(camera, camera, [0.1, 0, 0])
+    mat4.translate(camera, camera, [0.5, 0, 0])
   }
 
   if (inputMap['a']) {
