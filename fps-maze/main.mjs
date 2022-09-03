@@ -4,7 +4,7 @@ import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 import { map } from './map.mjs'
 
-const VERSION = '0.0.19'
+const VERSION = '0.0.20'
 const FOV = 45
 const FAR_CLIP = 300
 
