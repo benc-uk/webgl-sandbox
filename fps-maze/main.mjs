@@ -51,33 +51,77 @@ window.onload = async () => {
 
   const wallsBufferInfo = twgl.primitives.createCubeBufferInfo(gl, MAP_SIZE)
   const floorBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, MAP_SIZE, MAP_SIZE)
+  const ceilTransform = mat4.create()
+  mat4.rotateZ(ceilTransform, ceilTransform, Math.PI)
+  const ceilBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, MAP_SIZE, MAP_SIZE, 1, 1, ceilTransform)
+  const spriteTransform = mat4.create()
+  mat4.scale(spriteTransform, spriteTransform, [0.6, 0.6, 0.6])
+  mat4.rotateX(spriteTransform, spriteTransform, Math.PI / 2)
+  const spriteBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, MAP_SIZE, MAP_SIZE, 1, 1, spriteTransform)
 
   const wallTexture = twgl.createTexture(gl, {
     src: 'textures/STARG2.png',
-    mag: gl.NEAREST_MIPMAP_LINEAR,
   })
   const floorTexture = twgl.createTexture(gl, {
+    src: 'textures/FLOOR4_8.png',
+  })
+  const ceilTexture = twgl.createTexture(gl, {
     src: 'textures/FLOOR5_4.png',
-    mag: gl.NEAREST_MIPMAP_LINEAR,
+  })
+  const spriteTexture = twgl.createTexture(gl, {
+    src: 'sprites/TROOA1.png',
+    mag: gl.NEAREST,
   })
 
   const wallObj = createObject('wall', baseUniforms, wallsBufferInfo, wallTexture)
   const floorObj = createObject('floor', baseUniforms, floorBufferInfo, floorTexture)
+  const ceilObj = createObject('ceil', baseUniforms, ceilBufferInfo, ceilTexture)
+  const spriteObj = createObject('sprite', baseUniforms, spriteBufferInfo, spriteTexture)
 
   const instances = []
   for (let y = 0; y < map.length; y++) {
     for (let x = 0; x < map[y].length; x++) {
       const type = map[y][x]
-      const h = type == 0 ? -5 : 0
-      instances.push({
-        object: type ? wallObj : floorObj,
-        location: [x * MAP_SIZE + MAP_SIZE / 2, h, y * MAP_SIZE + MAP_SIZE / 2],
-      })
+
+      switch (type) {
+        case 1:
+          instances.push({
+            object: wallObj,
+            location: [x * MAP_SIZE + MAP_SIZE / 2, 0, y * MAP_SIZE + MAP_SIZE / 2],
+          })
+          break
+        case 2:
+        case 0:
+          instances.push({
+            object: floorObj,
+            location: [x * MAP_SIZE + MAP_SIZE / 2, -5, y * MAP_SIZE + MAP_SIZE / 2],
+          })
+          instances.push({
+            object: ceilObj,
+            location: [x * MAP_SIZE + MAP_SIZE / 2, 5, y * MAP_SIZE + MAP_SIZE / 2],
+          })
+          break
+      }
+    }
+  }
+
+  const sprites = []
+  for (let y = 0; y < map.length; y++) {
+    for (let x = 0; x < map[y].length; x++) {
+      const type = map[y][x]
+
+      switch (type) {
+        case 2:
+          sprites.push({
+            object: spriteObj,
+            location: [x * MAP_SIZE + MAP_SIZE / 2, -1.75, y * MAP_SIZE + MAP_SIZE / 2],
+          })
+      }
     }
   }
 
   camera = mat4.create()
-  mat4.targetTo(camera, [15, 0, 15], [40, 0, 30], [0, 1, 0])
+  mat4.targetTo(camera, [50, 0, 60], [40, 0, 30], [0, 1, 0])
 
   // Draw the scene repeatedly every frame
   var prevTime = 0
@@ -89,9 +133,12 @@ window.onload = async () => {
     handleInputs()
     gl.enable(gl.DEPTH_TEST)
     gl.enable(gl.CULL_FACE)
+    gl.enable(gl.BLEND)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
     drawScene(gl, programInfo, instances, deltaTime)
+    drawScene(gl, programInfo, sprites, deltaTime)
     requestAnimationFrame(render)
   }
 
@@ -169,29 +216,29 @@ function handleInputs() {
   const oldPosY = camera[14]
   let dir = -1
 
-  if (inputMap['w']) {
-    mat4.translate(camera, camera, [0, 0, -0.7])
+  if (inputMap['w'] || inputMap['ArrowUp']) {
+    mat4.translate(camera, camera, [0, 0, -1])
   }
 
-  if (inputMap['s']) {
-    mat4.translate(camera, camera, [0, 0, 0.7])
+  if (inputMap['s'] || inputMap['ArrowDown']) {
+    mat4.translate(camera, camera, [0, 0, 1])
     dir = 1
   }
 
-  if (inputMap['q']) {
+  if (inputMap['q'] || inputMap['z']) {
     mat4.translate(camera, camera, [-0.5, 0, 0])
   }
 
-  if (inputMap['e']) {
+  if (inputMap['e'] || inputMap['x']) {
     mat4.translate(camera, camera, [0.5, 0, 0])
   }
 
-  if (inputMap['a']) {
-    mat4.rotate(camera, camera, 0.04, [0, 1, 0])
+  if (inputMap['a'] || inputMap['ArrowLeft']) {
+    mat4.rotate(camera, camera, 0.08, [0, 1, 0])
   }
 
-  if (inputMap['d']) {
-    mat4.rotate(camera, camera, -0.04, [0, 1, 0])
+  if (inputMap['d'] || inputMap['ArrowRight']) {
+    mat4.rotate(camera, camera, -0.08, [0, 1, 0])
   }
 
   const mapX = Math.floor(camera[12] / MAP_SIZE)
@@ -207,7 +254,7 @@ function handleInputs() {
 }
 
 //
-//
+// Create an object with the given name, uniforms, buffers and texture
 //
 function createObject(name, uniforms, buffers, texture) {
   return {
