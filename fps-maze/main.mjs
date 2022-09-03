@@ -4,10 +4,13 @@ import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 import { map } from './map.mjs'
 
+const VERSION = '0.0.19'
 const FOV = 45
 const FAR_CLIP = 300
+
 let camera
 let lightPos = [0, 0, 0]
+
 const MAP_SIZE = 10
 let inputMap = {}
 
@@ -25,6 +28,7 @@ const baseUniforms = {
 // Start here when the page is loaded.
 //
 window.onload = async () => {
+  console.log(`🌍 Starting up... \n⚒️ v${VERSION}`)
   const gl = document.querySelector('canvas').getContext('webgl2')
   if (!gl) {
     setOverlay('Unable to initialize WebGL. Your browser or machine may not support it!')
@@ -67,13 +71,13 @@ window.onload = async () => {
       const h = type == 0 ? -5 : 0
       instances.push({
         object: type ? wallObj : floorObj,
-        location: [x * MAP_SIZE, h, y * MAP_SIZE],
+        location: [x * MAP_SIZE + MAP_SIZE / 2, h, y * MAP_SIZE + MAP_SIZE / 2],
       })
     }
   }
 
   camera = mat4.create()
-  mat4.targetTo(camera, [30, 0, 30], [40, 0, 30], [0, 1, 0])
+  mat4.targetTo(camera, [15, 0, 15], [40, 0, 30], [0, 1, 0])
 
   // Draw the scene repeatedly every frame
   var prevTime = 0
@@ -163,6 +167,7 @@ function initInput() {
 function handleInputs() {
   const oldPosX = camera[12]
   const oldPosY = camera[14]
+  let dir = -1
 
   if (inputMap['w']) {
     mat4.translate(camera, camera, [0, 0, -0.7])
@@ -170,6 +175,7 @@ function handleInputs() {
 
   if (inputMap['s']) {
     mat4.translate(camera, camera, [0, 0, 0.7])
+    dir = 1
   }
 
   if (inputMap['q']) {
@@ -188,9 +194,10 @@ function handleInputs() {
     mat4.rotate(camera, camera, -0.04, [0, 1, 0])
   }
 
-  const x = Math.floor(camera[12] / MAP_SIZE) + 1
-  const y = Math.floor(camera[14] / MAP_SIZE) + 1
-  if (map[x][y] == 1) {
+  const mapX = Math.floor(camera[12] / MAP_SIZE)
+  const mapY = Math.floor(camera[14] / MAP_SIZE)
+  if (map[mapY][mapX] == 1) {
+    //mat4.translate(camera, camera, [0, 0, -0.7 * dir])
     camera[12] = oldPosX
     camera[14] = oldPosY
   }
