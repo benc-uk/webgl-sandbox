@@ -4,7 +4,7 @@ import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 import { map } from './map.mjs'
 
-const VERSION = '0.0.21'
+const VERSION = '0.0.22'
 const FOV = 45
 const FAR_CLIP = 300
 
@@ -129,9 +129,6 @@ window.onload = async () => {
 
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.CULL_FACE)
-  gl.enable(gl.BLEND)
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
   // Draw the scene repeatedly every frame
   console.log('♻️ Starting render loop with', instances.length + sprites.length, 'instances')
   var prevTime = 0
@@ -143,7 +140,7 @@ window.onload = async () => {
 
     handleInputs()
 
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    gl.clear(gl.COLOR_BUFFER_BIT)
     drawScene(gl, glProgramInfo, instances, deltaTime)
     drawScene(gl, glProgramInfo, sprites, deltaTime, true)
     requestAnimationFrame(render)

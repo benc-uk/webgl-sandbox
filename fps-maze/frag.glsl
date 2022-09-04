@@ -24,7 +24,12 @@ vec2 lit(float NdotL, float NdotH, float shininess) {
 }
 
 void main(void) {
-  vec4 diffuseColor = texture2D(u_texture, v_texCoord);
+  vec4 texel = texture2D(u_texture, v_texCoord);
+
+  // Magic to make transparent sprites work, without blending
+  if(texel.a < 0.5) {
+    discard;
+  }
 
   vec3 a_normal = normalize(v_normal);
   vec3 surfaceToLight = normalize(v_surfaceToLight);
@@ -37,8 +42,8 @@ void main(void) {
   attenuation = clamp(attenuation * 1000.0, 0.0, 1.0);
 
   vec4 outColor = vec4(
-    (diffuseColor * u_lightAmbient * attenuation + (u_lightColor * (diffuseColor * lighting.x * attenuation + u_specular * lighting.y * u_specularFactor * attenuation))).rgb, 
-    diffuseColor.a 
+    (texel * u_lightAmbient * attenuation + (u_lightColor * (texel * lighting.x * attenuation + u_specular * lighting.y * u_specularFactor * attenuation))).rgb, 
+    texel.a 
   );
 
   gl_FragColor = outColor; 
