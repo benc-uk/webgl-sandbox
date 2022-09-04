@@ -4,7 +4,7 @@ import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 import { map } from './map.mjs'
 
-const VERSION = '0.0.20'
+const VERSION = '0.0.21'
 const FOV = 45
 const FAR_CLIP = 300
 
@@ -38,13 +38,15 @@ window.onload = async () => {
   initInput()
 
   // Load shaders from external files
-  const { vertShaderSource, fragShaderSource } = await fetchShaders('./vert.glsl', './frag.glsl')
 
   // Use TWLG to set up the shaders and program
-  let programInfo = null
+  let glProgramInfo = null
   try {
-    programInfo = twgl.createProgramInfo(gl, [vertShaderSource, fragShaderSource])
+    let { vertShaderSource: vs, fragShaderSource: fs } = await fetchShaders('./vert.glsl', './frag.glsl')
+    glProgramInfo = twgl.createProgramInfo(gl, [vs, fs])
+    console.log('🎨 Loaded all shaders, GL is ready')
   } catch (err) {
+    console.error(err)
     setOverlay(err.message)
     return
   }
@@ -55,7 +57,7 @@ window.onload = async () => {
   mat4.rotateZ(ceilTransform, ceilTransform, Math.PI)
   const ceilBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, MAP_SIZE, MAP_SIZE, 1, 1, ceilTransform)
   const spriteTransform = mat4.create()
-  mat4.scale(spriteTransform, spriteTransform, [0.6, 0.6, 0.6])
+  mat4.scale(spriteTransform, spriteTransform, [0.45, 0.6, 0.6])
   mat4.rotateX(spriteTransform, spriteTransform, Math.PI / 2)
   const spriteBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, MAP_SIZE, MAP_SIZE, 1, 1, spriteTransform)
 
@@ -72,11 +74,13 @@ window.onload = async () => {
     src: 'sprites/TROOA1.png',
     mag: gl.NEAREST,
   })
+  console.log('🖼️ Textures loaded')
 
   const wallObj = createObject('wall', baseUniforms, wallsBufferInfo, wallTexture)
   const floorObj = createObject('floor', baseUniforms, floorBufferInfo, floorTexture)
   const ceilObj = createObject('ceil', baseUniforms, ceilBufferInfo, ceilTexture)
   const spriteObj = createObject('sprite', baseUniforms, spriteBufferInfo, spriteTexture)
+  console.log('📦 Built all object buffers')
 
   const instances = []
   for (let y = 0; y < map.length; y++) {
@@ -114,7 +118,7 @@ window.onload = async () => {
         case 2:
           sprites.push({
             object: spriteObj,
-            location: [x * MAP_SIZE + MAP_SIZE / 2, -1.75, y * MAP_SIZE + MAP_SIZE / 2],
+            location: [x * MAP_SIZE + MAP_SIZE / 2, -2.0, y * MAP_SIZE + MAP_SIZE / 2],
           })
       }
     }
@@ -123,22 +127,25 @@ window.onload = async () => {
   camera = mat4.create()
   mat4.targetTo(camera, [50, 0, 60], [40, 0, 30], [0, 1, 0])
 
+  gl.enable(gl.DEPTH_TEST)
+  gl.enable(gl.CULL_FACE)
+  gl.enable(gl.BLEND)
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
   // Draw the scene repeatedly every frame
+  console.log('♻️ Starting render loop with', instances.length + sprites.length, 'instances')
   var prevTime = 0
+
   async function render(now) {
     now *= 0.001
     const deltaTime = now - prevTime // Get smoothed time difference
     prevTime = now
 
     handleInputs()
-    gl.enable(gl.DEPTH_TEST)
-    gl.enable(gl.CULL_FACE)
-    gl.enable(gl.BLEND)
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-    drawScene(gl, programInfo, instances, deltaTime)
-    drawScene(gl, programInfo, sprites, deltaTime)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    drawScene(gl, glProgramInfo, instances, deltaTime)
+    drawScene(gl, glProgramInfo, sprites, deltaTime, true)
     requestAnimationFrame(render)
   }
 
@@ -149,7 +156,7 @@ window.onload = async () => {
 //
 // Draw the scene!
 //
-function drawScene(gl, programInfo, instances) {
+function drawScene(gl, programInfo, instances, _, billboard = false) {
   twgl.resizeCanvasToDisplaySize(gl.canvas)
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
@@ -159,8 +166,6 @@ function drawScene(gl, programInfo, instances) {
   // Do this in every frame since the window and therefore the aspect ratio of projection matrix might change
   const perspective = mat4.create()
   mat4.perspective(perspective, (FOV * Math.PI) / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, FAR_CLIP)
-  const viewProjection = mat4.create()
-  mat4.multiply(viewProjection, perspective, view)
 
   let uniforms = {
     u_viewInverse: camera, // Add the view inverse to the uniforms, we need it for shading
@@ -185,8 +190,20 @@ function drawScene(gl, programInfo, instances) {
     mat4.invert(uniforms.u_worldInverseTranspose, world)
     mat4.transpose(uniforms.u_worldInverseTranspose, uniforms.u_worldInverseTranspose)
 
+    // World view before projection, intermediate step for billboarding
+    const worldView = mat4.create()
+    mat4.multiply(worldView, view, world)
+    if (billboard === true) {
+      worldView[0] = 1
+      worldView[1] = 0
+      worldView[2] = 0
+      worldView[8] = 0
+      worldView[9] = 0
+      worldView[10] = 1
+    }
+
     // Populate u_worldViewProjection which is pretty fundamental
-    mat4.multiply(uniforms.u_worldViewProjection, viewProjection, world)
+    mat4.multiply(uniforms.u_worldViewProjection, perspective, worldView)
 
     // Actual drawing
     gl.useProgram(programInfo.program)
@@ -234,11 +251,11 @@ function handleInputs() {
   }
 
   if (inputMap['a'] || inputMap['ArrowLeft']) {
-    mat4.rotate(camera, camera, 0.08, [0, 1, 0])
+    mat4.rotateY(camera, camera, 0.1)
   }
 
   if (inputMap['d'] || inputMap['ArrowRight']) {
-    mat4.rotate(camera, camera, -0.08, [0, 1, 0])
+    mat4.rotateY(camera, camera, -0.1)
   }
 
   const mapX = Math.floor(camera[12] / MAP_SIZE)
