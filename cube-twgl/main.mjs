@@ -17,12 +17,12 @@ window.onload = async () => {
   }
 
   // Load shaders from external files
-  const { vertShaderSource, fragShaderSource } = await fetchShaders('./vert.glsl', './frag.glsl')
+  const { vertex, fragment } = await fetchShaders('./vert.glsl', './frag.glsl')
 
   // Use TWLG to set up the shaders and program
   let programInfo = null
   try {
-    programInfo = twgl.createProgramInfo(gl, [vertShaderSource, fragShaderSource])
+    programInfo = twgl.createProgramInfo(gl, [vertex, fragment])
   } catch (err) {
     setOverlay(err.message)
     return
