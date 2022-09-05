@@ -9,7 +9,6 @@ varying float v_lightDist;
 
 uniform vec4 u_lightColor;
 uniform vec4 u_lightAmbient;
-uniform vec4 u_diffuseMult;
 uniform vec4 u_specular;
 uniform float u_shininess;
 uniform float u_specularFactor;
@@ -25,11 +24,6 @@ vec2 lit(float NdotL, float NdotH, float shininess) {
 
 void main(void) {
   vec4 texel = texture2D(u_texture, v_texCoord);
-
-  // Magic to make transparent sprites work, without blending
-  if(texel.a < 0.5) {
-    discard;
-  }
 
   vec3 a_normal = normalize(v_normal);
   vec3 surfaceToLight = normalize(v_surfaceToLight);

@@ -19,14 +19,14 @@ varying vec3 v_surfaceToLight;
 varying vec3 v_surfaceToView;
 varying float v_lightDist;
 
-void main() {
-  v_texCoord = texcoord;
-
-  v_position = (u_worldViewProjection * position);
-  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
-  v_surfaceToLight = u_lightWorldPos - (u_world * position).xyz;
-  v_surfaceToView = (u_viewInverse[3] - (u_world * position)).xyz;
-  v_lightDist = length(v_surfaceToLight);
-
-  gl_Position = v_position;
+void main(){
+  v_texCoord=texcoord;
+  
+  v_position=(u_worldViewProjection*position);
+  v_normal=(u_worldInverseTranspose*vec4(normal,0)).xyz;
+  v_surfaceToLight=u_lightWorldPos-(u_world*position).xyz;
+  v_surfaceToView=(u_viewInverse[3]-(u_world*position)).xyz;
+  v_lightDist=length(v_surfaceToLight);
+  
+  gl_Position=v_position;
 }

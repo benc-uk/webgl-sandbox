@@ -17,7 +17,6 @@ let inputMap = {}
 const baseUniforms = {
   u_lightColor: [1, 1, 1, 1],
 
-  u_diffuseMult: [0.8, 0.8, 0.8, 1],
   u_lightAmbient: [0.3, 0.3, 0.3, 1],
   u_specular: [1, 1, 1, 1],
   u_shininess: 150,
@@ -40,10 +39,13 @@ window.onload = async () => {
   // Load shaders from external files
 
   // Use TWLG to set up the shaders and program
-  let glProgramInfo = null
+  let worldProg = null
+  let spriteProg = null
   try {
-    let { vertShaderSource: vs, fragShaderSource: fs } = await fetchShaders('./vert.glsl', './frag.glsl')
-    glProgramInfo = twgl.createProgramInfo(gl, [vs, fs])
+    const { vertex, fragment } = await fetchShaders('./world-vert.glsl', './world-frag.glsl')
+    worldProg = twgl.createProgramInfo(gl, [vertex, fragment])
+    let { vertex: spriteVert, fragment: spriteFrag } = await fetchShaders('./sprite-vert.glsl', './sprite-frag.glsl')
+    spriteProg = twgl.createProgramInfo(gl, [spriteVert, spriteFrag])
     console.log('🎨 Loaded all shaders, GL is ready')
   } catch (err) {
     console.error(err)
@@ -53,9 +55,11 @@ window.onload = async () => {
 
   const wallsBufferInfo = twgl.primitives.createCubeBufferInfo(gl, MAP_SIZE)
   const floorBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, MAP_SIZE, MAP_SIZE)
+
   const ceilTransform = mat4.create()
   mat4.rotateZ(ceilTransform, ceilTransform, Math.PI)
   const ceilBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, MAP_SIZE, MAP_SIZE, 1, 1, ceilTransform)
+
   const spriteTransform = mat4.create()
   mat4.scale(spriteTransform, spriteTransform, [0.45, 0.6, 0.6])
   mat4.rotateX(spriteTransform, spriteTransform, Math.PI / 2)
@@ -129,6 +133,9 @@ window.onload = async () => {
 
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.CULL_FACE)
+  // gl.enable(gl.BLEND)
+  // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
   // Draw the scene repeatedly every frame
   console.log('♻️ Starting render loop with', instances.length + sprites.length, 'instances')
   var prevTime = 0
@@ -141,8 +148,8 @@ window.onload = async () => {
     handleInputs()
 
     gl.clear(gl.COLOR_BUFFER_BIT)
-    drawScene(gl, glProgramInfo, instances, deltaTime)
-    drawScene(gl, glProgramInfo, sprites, deltaTime, true)
+    drawScene(gl, worldProg, instances, deltaTime)
+    drawScene(gl, spriteProg, sprites, deltaTime, true)
     requestAnimationFrame(render)
   }
 
@@ -248,11 +255,11 @@ function handleInputs() {
   }
 
   if (inputMap['a'] || inputMap['ArrowLeft']) {
-    mat4.rotateY(camera, camera, 0.1)
+    mat4.rotateY(camera, camera, 0.06)
   }
 
   if (inputMap['d'] || inputMap['ArrowRight']) {
-    mat4.rotateY(camera, camera, -0.1)
+    mat4.rotateY(camera, camera, -0.06)
   }
 
   const mapX = Math.floor(camera[12] / MAP_SIZE)
