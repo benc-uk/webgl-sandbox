@@ -10,6 +10,8 @@ const FAR_CLIP = 300
 
 let camera
 let lightPos = [0, 0, 0]
+let animTime = 0
+let spriteIndex = 0
 
 const MAP_SIZE = 10
 let inputMap = {}
@@ -74,16 +76,21 @@ window.onload = async () => {
   const ceilTexture = twgl.createTexture(gl, {
     src: 'textures/FLOOR5_4.png',
   })
-  const spriteTexture = twgl.createTexture(gl, {
+  const spriteTexture1 = twgl.createTexture(gl, {
     src: 'sprites/TROOA1.png',
     mag: gl.NEAREST,
   })
+  const spriteTexture2 = twgl.createTexture(gl, {
+    src: 'sprites/TROOC1.png',
+    mag: gl.NEAREST,
+  })
+  const spriteTextures = [spriteTexture1, spriteTexture2]
   console.log('🖼️ Textures loaded')
 
-  const wallObj = createObject('wall', baseUniforms, wallsBufferInfo, wallTexture)
-  const floorObj = createObject('floor', baseUniforms, floorBufferInfo, floorTexture)
-  const ceilObj = createObject('ceil', baseUniforms, ceilBufferInfo, ceilTexture)
-  const spriteObj = createObject('sprite', baseUniforms, spriteBufferInfo, spriteTexture)
+  const wallObj = createObject('wall', baseUniforms, wallsBufferInfo, [wallTexture], 0.0)
+  const floorObj = createObject('floor', baseUniforms, floorBufferInfo, [floorTexture], 0.0)
+  const ceilObj = createObject('ceil', baseUniforms, ceilBufferInfo, [ceilTexture], 0.0)
+  const spriteObj = createObject('sprite', baseUniforms, spriteBufferInfo, spriteTextures, 0.6)
   console.log('📦 Built all object buffers')
 
   const instances = []
@@ -96,6 +103,7 @@ window.onload = async () => {
           instances.push({
             object: wallObj,
             location: [x * MAP_SIZE + MAP_SIZE / 2, 0, y * MAP_SIZE + MAP_SIZE / 2],
+            textureIndex: 0,
           })
           break
         case 2:
@@ -103,10 +111,12 @@ window.onload = async () => {
           instances.push({
             object: floorObj,
             location: [x * MAP_SIZE + MAP_SIZE / 2, -5, y * MAP_SIZE + MAP_SIZE / 2],
+            textureIndex: 0,
           })
           instances.push({
             object: ceilObj,
             location: [x * MAP_SIZE + MAP_SIZE / 2, 5, y * MAP_SIZE + MAP_SIZE / 2],
+            textureIndex: 0,
           })
           break
       }
@@ -123,6 +133,8 @@ window.onload = async () => {
           sprites.push({
             object: spriteObj,
             location: [x * MAP_SIZE + MAP_SIZE / 2, -2.0, y * MAP_SIZE + MAP_SIZE / 2],
+            animTime: Math.random() * spriteObj.animSpeed,
+            textureIndex: 0,
           })
       }
     }
@@ -160,7 +172,9 @@ window.onload = async () => {
 //
 // Draw the scene!
 //
-function drawScene(gl, programInfo, instances, _, billboard = false) {
+function drawScene(gl, programInfo, instances, deltaTime, billboard = false) {
+  animTime += deltaTime
+
   twgl.resizeCanvasToDisplaySize(gl.canvas)
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
@@ -177,10 +191,18 @@ function drawScene(gl, programInfo, instances, _, billboard = false) {
   }
 
   for (let instance of instances) {
+    let tex = instance.object.textures[instance.textureIndex]
+    instance.animTime += deltaTime
+    if (instance.animTime > instance.object.animSpeed) {
+      instance.animTime = 0.0
+      instance.textureIndex = (instance.textureIndex + 1) % instance.object.textures.length
+      tex = instance.object.textures[1]
+    }
+
     uniforms = {
       ...uniforms,
       ...instance.object.uniforms,
-      u_texture: instance.object.texture,
+      u_texture: tex,
       u_worldInverseTranspose: mat4.create(), // For transforming normals
       u_worldViewProjection: mat4.create(), // Main transformation matrix for vetices
     }
@@ -317,11 +339,12 @@ function handleInputs(gl) {
 //
 // Create an object with the given name, uniforms, buffers and texture
 //
-function createObject(name, uniforms, buffers, texture) {
+function createObject(name, uniforms, buffers, textures, animSpeed) {
   return {
     name,
     uniforms,
     buffers,
-    texture,
+    textures,
+    animSpeed,
   }
 }
