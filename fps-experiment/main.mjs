@@ -234,18 +234,16 @@ function initInput(gl) {
     const x = e.touches[0].clientX
     const y = e.touches[0].clientY
 
-    if (x < gl.canvas.clientWidth / 2) {
+    if (x < gl.canvas.clientWidth / 3) {
       inputMap['a'] = true
     }
-    if (x > gl.canvas.clientWidth / 2) {
+    if (x > gl.canvas.clientWidth / 3) {
       inputMap['d'] = true
     }
-    if (y < gl.canvas.clientHeight / 2) {
-      inputMap = {}
+    if (y < gl.canvas.clientHeight / 3) {
       inputMap['w'] = true
     }
-    if (y > gl.canvas.clientHeight / 2) {
-      inputMap = {}
+    if (y > gl.canvas.clientHeight / 3) {
       inputMap['s'] = true
     }
   })
