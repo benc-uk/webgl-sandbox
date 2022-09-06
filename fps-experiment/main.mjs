@@ -4,7 +4,7 @@ import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 import { map } from './map.mjs'
 
-const VERSION = '0.0.22'
+const VERSION = '0.0.25'
 const FOV = 45
 const FAR_CLIP = 300
 
@@ -230,9 +230,8 @@ function initInput(gl) {
   })
 
   function touchMouseHandler(e) {
-    console.log('here')
-    let x = 0
-    let y = 0
+    let x = -1
+    let y = -1
     if (e.touches) {
       x = e.touches[0].clientX
       y = e.touches[0].clientY
@@ -240,6 +239,8 @@ function initInput(gl) {
       x = e.clientX
       y = e.clientY
     }
+
+    if (x < 0 || y < 0) return
 
     if (x < gl.canvas.clientWidth / 3) {
       inputMap['a'] = true
