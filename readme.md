@@ -11,7 +11,7 @@ These should run straight from GitHub Pages here http://code.benco.io/webgl-sand
 - [cube](./cube/) - A spinning 3D cube with coloured sides
 - [cube-twgl](./cube-twgl/) - A spinning 3D cube with coloured sides & shading. Using [TWGL](https://twgljs.org/) helper library
 - [spheres](./spheres/) - Lots of spheres, with specular Blinn-Phong shading
-- [fps-maze](./fps-maze/) - Basic FPS style game
+- [fps-experiment](./fps-experiment/) - Basic FPS style game
 
 ## Helper Library
 
