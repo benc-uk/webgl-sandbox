@@ -34,7 +34,7 @@ window.onload = async () => {
     return
   }
 
-  initInput()
+  initInput(gl)
 
   // Load shaders from external files
 
@@ -220,19 +220,49 @@ function drawScene(gl, programInfo, instances, _, billboard = false) {
 //
 // Initialize the input handling
 //
-function initInput() {
+function initInput(gl) {
   window.addEventListener('keydown', (e) => {
     inputMap[e.key] = true
   })
+
   window.addEventListener('keyup', (e) => {
     delete inputMap[e.key]
+  })
+
+  const canvas = document.querySelector('canvas')
+  canvas.addEventListener('touchstart', (e) => {
+    const x = e.touches[0].clientX
+    const y = e.touches[0].clientY
+
+    if (x < gl.canvas.clientWidth / 2) {
+      inputMap['a'] = true
+    }
+    if (x > gl.canvas.clientWidth / 2) {
+      inputMap['d'] = true
+    }
+    if (y < gl.canvas.clientHeight / 2) {
+      inputMap = {}
+      inputMap['w'] = true
+    }
+    if (y > gl.canvas.clientHeight / 2) {
+      inputMap = {}
+      inputMap['s'] = true
+    }
+  })
+
+  canvas.addEventListener('touchend', (e) => {
+    inputMap = {}
+  })
+
+  canvas.addEventListener('mouseup', (e) => {
+    inputMap = {}
   })
 }
 
 //
 // Handle any active input, called every frame
 //
-function handleInputs() {
+function handleInputs(gl) {
   const oldPosX = camera[12]
   const oldPosY = camera[14]
   let dir = -1

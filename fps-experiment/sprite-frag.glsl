@@ -1,3 +1,8 @@
+// =============================================================
+// Fragment shader for billboarded sprites, with transparency
+// and simplified distance based lighting 
+// =============================================================
+
 precision highp float;
 
 varying vec4 v_position;
