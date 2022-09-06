@@ -229,24 +229,35 @@ function initInput(gl) {
     delete inputMap[e.key]
   })
 
-  const canvas = document.querySelector('canvas')
-  canvas.addEventListener('touchstart', (e) => {
-    const x = e.touches[0].clientX
-    const y = e.touches[0].clientY
+  function touchMouseHandler(e) {
+    console.log('here')
+    let x = 0
+    let y = 0
+    if (e.touches) {
+      x = e.touches[0].clientX
+      y = e.touches[0].clientY
+    } else {
+      x = e.clientX
+      y = e.clientY
+    }
 
     if (x < gl.canvas.clientWidth / 3) {
       inputMap['a'] = true
     }
-    if (x > gl.canvas.clientWidth / 3) {
+    if (x > gl.canvas.clientWidth - gl.canvas.clientWidth / 3) {
       inputMap['d'] = true
     }
     if (y < gl.canvas.clientHeight / 3) {
       inputMap['w'] = true
     }
-    if (y > gl.canvas.clientHeight / 3) {
+    if (y > gl.canvas.clientHeight - gl.canvas.clientHeight / 3) {
       inputMap['s'] = true
     }
-  })
+  }
+
+  const canvas = document.querySelector('canvas')
+  canvas.addEventListener('touchstart', touchMouseHandler)
+  canvas.addEventListener('mousedown', touchMouseHandler)
 
   canvas.addEventListener('touchend', (e) => {
     inputMap = {}
