@@ -157,7 +157,7 @@ window.onload = async () => {
     const deltaTime = now - prevTime // Get smoothed time difference
     prevTime = now
 
-    handleInputs()
+    handleInputs(gl, deltaTime)
 
     gl.clear(gl.COLOR_BUFFER_BIT)
     drawScene(gl, worldProg, instances, deltaTime)
@@ -294,40 +294,39 @@ function initInput(gl) {
 //
 // Handle any active input, called every frame
 //
-function handleInputs(gl) {
+function handleInputs(gl, deltaTime) {
   const oldPosX = camera[12]
   const oldPosY = camera[14]
-  let dir = -1
+  let moveSpeed = 40 * deltaTime
+  let turnSpeed = 3 * deltaTime
 
   if (inputMap['w'] || inputMap['ArrowUp']) {
-    mat4.translate(camera, camera, [0, 0, -1])
+    mat4.translate(camera, camera, [0, 0, -moveSpeed])
   }
 
   if (inputMap['s'] || inputMap['ArrowDown']) {
-    mat4.translate(camera, camera, [0, 0, 1])
-    dir = 1
+    mat4.translate(camera, camera, [0, 0, moveSpeed])
   }
 
   if (inputMap['q'] || inputMap['z']) {
-    mat4.translate(camera, camera, [-0.5, 0, 0])
+    mat4.translate(camera, camera, [-moveSpeed / 2, 0, 0])
   }
 
   if (inputMap['e'] || inputMap['x']) {
-    mat4.translate(camera, camera, [0.5, 0, 0])
+    mat4.translate(camera, camera, [moveSpeed / 2, 0, 0])
   }
 
   if (inputMap['a'] || inputMap['ArrowLeft']) {
-    mat4.rotateY(camera, camera, 0.06)
+    mat4.rotateY(camera, camera, turnSpeed)
   }
 
   if (inputMap['d'] || inputMap['ArrowRight']) {
-    mat4.rotateY(camera, camera, -0.06)
+    mat4.rotateY(camera, camera, -turnSpeed)
   }
 
   const mapX = Math.floor(camera[12] / MAP_SIZE)
   const mapY = Math.floor(camera[14] / MAP_SIZE)
   if (map[mapY][mapX] == 1) {
-    //mat4.translate(camera, camera, [0, 0, -0.7 * dir])
     camera[12] = oldPosX
     camera[14] = oldPosY
   }
