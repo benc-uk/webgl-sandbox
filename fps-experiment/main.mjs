@@ -4,14 +4,12 @@ import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 import { map } from './map.mjs'
 
-const VERSION = '0.0.25'
+const VERSION = '0.0.26'
 const FOV = 45
 const FAR_CLIP = 300
 
 let camera
 let lightPos = [0, 0, 0]
-let animTime = 0
-let spriteIndex = 0
 
 const MAP_SIZE = 10
 let inputMap = {}
@@ -30,6 +28,7 @@ const baseUniforms = {
 //
 window.onload = async () => {
   console.log(`🌍 Starting up... \n⚒️ v${VERSION}`)
+  document.querySelector('#version').innerText = VERSION
   const gl = document.querySelector('canvas').getContext('webgl2')
   if (!gl) {
     setOverlay('Unable to initialize WebGL. Your browser or machine may not support it!')
@@ -173,8 +172,6 @@ window.onload = async () => {
 // Draw the scene!
 //
 function drawScene(gl, programInfo, instances, deltaTime, billboard = false) {
-  animTime += deltaTime
-
   twgl.resizeCanvasToDisplaySize(gl.canvas)
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
