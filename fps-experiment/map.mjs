@@ -1,3 +1,5 @@
+export const MAP_SIZE = 10
+
 // prettier-ignore
 export const map = [
   [1,1,1,1,1,1,1,1,1,1],
