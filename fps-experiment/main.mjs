@@ -4,7 +4,7 @@ import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 import { map } from './map.mjs'
 
-const VERSION = '0.0.26'
+const VERSION = '0.0.28'
 const FOV = 45
 const FAR_CLIP = 300
 
@@ -29,6 +29,7 @@ const baseUniforms = {
 window.onload = async () => {
   console.log(`🌍 Starting up... \n⚒️ v${VERSION}`)
   document.querySelector('#version').innerText = VERSION
+
   const gl = document.querySelector('canvas').getContext('webgl2')
   if (!gl) {
     setOverlay('Unable to initialize WebGL. Your browser or machine may not support it!')
@@ -37,20 +38,23 @@ window.onload = async () => {
 
   initInput(gl)
 
-  // Load shaders from external files
-
-  // Use TWLG to set up the shaders and program
+  // Use TWLG to set up the shaders and programs
+  // We have two programs and two pairs of shaders, one for the world and one for the sprites
   let worldProg = null
   let spriteProg = null
   try {
-    const { vertex, fragment } = await fetchShaders('./world-vert.glsl', './world-frag.glsl')
-    worldProg = twgl.createProgramInfo(gl, [vertex, fragment])
+    // Note, we load shaders from external files
+    const { vertex: worldVert, fragment: worldFrag } = await fetchShaders('./world-vert.glsl', './world-frag.glsl')
+    worldProg = twgl.createProgramInfo(gl, [worldVert, worldFrag])
+
     let { vertex: spriteVert, fragment: spriteFrag } = await fetchShaders('./sprite-vert.glsl', './sprite-frag.glsl')
     spriteProg = twgl.createProgramInfo(gl, [spriteVert, spriteFrag])
+
     console.log('🎨 Loaded all shaders, GL is ready')
   } catch (err) {
     console.error(err)
     setOverlay(err.message)
+    // We give up, no point in continuing if we can't load the shaders
     return
   }
 
@@ -62,7 +66,7 @@ window.onload = async () => {
   const ceilBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, MAP_SIZE, MAP_SIZE, 1, 1, ceilTransform)
 
   const spriteTransform = mat4.create()
-  mat4.scale(spriteTransform, spriteTransform, [0.45, 0.6, 0.6])
+  mat4.scale(spriteTransform, spriteTransform, [0.6, 0.6, 0.6])
   mat4.rotateX(spriteTransform, spriteTransform, Math.PI / 2)
   const spriteBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, MAP_SIZE, MAP_SIZE, 1, 1, spriteTransform)
 
@@ -80,16 +84,24 @@ window.onload = async () => {
     mag: gl.NEAREST,
   })
   const spriteTexture2 = twgl.createTexture(gl, {
+    src: 'sprites/TROOB1.png',
+    mag: gl.NEAREST,
+  })
+  const spriteTexture3 = twgl.createTexture(gl, {
     src: 'sprites/TROOC1.png',
     mag: gl.NEAREST,
   })
-  const spriteTextures = [spriteTexture1, spriteTexture2]
+  const spriteTexture4 = twgl.createTexture(gl, {
+    src: 'sprites/TROOD1.png',
+    mag: gl.NEAREST,
+  })
+  const spriteTextures = [spriteTexture1, spriteTexture2, spriteTexture3, spriteTexture4]
   console.log('🖼️ Textures loaded')
 
   const wallObj = createObject('wall', baseUniforms, wallsBufferInfo, [wallTexture], 0.0)
   const floorObj = createObject('floor', baseUniforms, floorBufferInfo, [floorTexture], 0.0)
   const ceilObj = createObject('ceil', baseUniforms, ceilBufferInfo, [ceilTexture], 0.0)
-  const spriteObj = createObject('sprite', baseUniforms, spriteBufferInfo, spriteTextures, 0.6)
+  const spriteObj = createObject('sprite', baseUniforms, spriteBufferInfo, spriteTextures, 0.4)
   console.log('📦 Built all object buffers')
 
   const instances = []
@@ -193,7 +205,7 @@ function drawScene(gl, programInfo, instances, deltaTime, billboard = false) {
     if (instance.animTime > instance.object.animSpeed) {
       instance.animTime = 0.0
       instance.textureIndex = (instance.textureIndex + 1) % instance.object.textures.length
-      tex = instance.object.textures[1]
+      tex = instance.object.textures[instance.textureIndex]
     }
 
     uniforms = {
