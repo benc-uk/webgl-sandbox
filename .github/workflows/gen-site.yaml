@@ -33,15 +33,17 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v2
 
-      - uses: ZacJW/markdown-html-action@1.1.0
+      - uses: jaywcjlove/markdown-to-html-cli@main
         with:
-          input_files: '["readme.md"]'
-          output_files: '["index.html"]'
+          source: readme.md
+          output: index.html
+          
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
           path: '.'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
