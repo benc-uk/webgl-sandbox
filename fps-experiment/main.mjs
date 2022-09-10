@@ -5,7 +5,7 @@ import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 import { World, Sphere, Body } from './cannon-es/dist/cannon-es.js'
 
-const VERSION = '0.1.1'
+const VERSION = '0.1.2'
 const FOV = 45
 const FAR_CLIP = 300
 
