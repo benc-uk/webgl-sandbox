@@ -10,7 +10,7 @@ const baseUniforms = {
   u_lightAmbient: [0.3, 0.3, 0.3, 1],
   u_specular: [1, 1, 1, 1],
   u_shininess: 150,
-  u_specularFactor: 0.5,
+  u_specularFactor: 0.6,
 }
 
 export function buildInstances(gl, physWorld) {
@@ -38,19 +38,24 @@ export function buildInstances(gl, physWorld) {
   const spriteTexture1 = twgl.createTexture(gl, {
     src: 'sprites/TROOA1.png',
     mag: gl.NEAREST,
+    wrap: gl.CLAMP_TO_EDGE,
   })
   const spriteTexture2 = twgl.createTexture(gl, {
     src: 'sprites/TROOB1.png',
     mag: gl.NEAREST,
+    wrap: gl.CLAMP_TO_EDGE,
   })
   const spriteTexture3 = twgl.createTexture(gl, {
     src: 'sprites/TROOC1.png',
     mag: gl.NEAREST,
+    wrap: gl.CLAMP_TO_EDGE,
   })
   const spriteTexture4 = twgl.createTexture(gl, {
     src: 'sprites/TROOD1.png',
     mag: gl.NEAREST,
+    wrap: gl.CLAMP_TO_EDGE,
   })
+
   const spriteTextures = [spriteTexture1, spriteTexture2, spriteTexture3, spriteTexture4]
   console.log('🖼️ Textures loaded')
 
