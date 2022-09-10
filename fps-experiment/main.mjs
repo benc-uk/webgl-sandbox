@@ -5,7 +5,7 @@ import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 import { World, Sphere, Body } from './cannon-es/dist/cannon-es.js'
 
-const VERSION = '0.1.0'
+const VERSION = '0.1.1'
 const FOV = 45
 const FAR_CLIP = 300
 
@@ -236,7 +236,7 @@ function initInput(gl) {
 // Handle any active input, called every frame
 //
 function handleInputs(gl, deltaTime, physWorld) {
-  let moveSpeed = 1400 * deltaTime
+  let moveSpeed = 2.4 / deltaTime
   let turnSpeed = 3 * deltaTime
 
   if (inputMap['w'] || inputMap['ArrowUp']) {
@@ -248,11 +248,11 @@ function handleInputs(gl, deltaTime, physWorld) {
   }
 
   if (inputMap['q'] || inputMap['z']) {
-    playerBody.velocity.set(-playerFacing[2] * moveSpeed, 0, playerFacing[0] * moveSpeed)
+    playerBody.velocity.set((-playerFacing[2] * moveSpeed) / 2, 0, (playerFacing[0] * moveSpeed) / 2)
   }
 
   if (inputMap['e'] || inputMap['x']) {
-    playerBody.velocity.set(playerFacing[2] * moveSpeed, 0, -playerFacing[0] * moveSpeed)
+    playerBody.velocity.set((playerFacing[2] * moveSpeed) / 2, 0, (-playerFacing[0] * moveSpeed) / 2)
   }
 
   if (inputMap['a'] || inputMap['ArrowLeft']) {
