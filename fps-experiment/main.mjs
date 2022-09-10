@@ -1,17 +1,21 @@
 import { fetchShaders, setOverlay } from '../lib/gl-utils.mjs'
 import { buildInstances } from './world.mjs'
-import { map, MAP_SIZE } from './map.mjs'
 import * as twgl from 'https://cdnjs.cloudflare.com/ajax/libs/twgl.js/4.19.5/twgl-full.module.js'
 import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
-const VERSION = '0.0.28'
+import { World, Sphere, Body } from './cannon-es/dist/cannon-es.js'
+
+const VERSION = '0.1.0'
 const FOV = 45
 const FAR_CLIP = 300
 
 let camera
-let lightPos = [0, 0, 0]
 
 let inputMap = {}
+
+let playerBody
+let playerFacing = [0, 0, 0]
+let playerLight = [0, 0, 0]
 
 //
 // Start here when the page is loaded.
@@ -44,14 +48,30 @@ window.onload = async () => {
   } catch (err) {
     console.error(err)
     setOverlay(err.message)
-    // We give up, no point in continuing if we can't load the shaders
+    // We give up, no point in continuing if we can't load the shaders!
     return
   }
 
-  const { instances, sprites } = buildInstances(gl)
+  const physWorld = new World({})
+  playerBody = new Body({
+    mass: 0.001,
+    shape: new Sphere(2),
+    linearDamping: 0.999,
+  })
+  physWorld.addBody(playerBody)
+  console.log('🧪 Physics initialized')
+
+  const { instances, sprites } = buildInstances(gl, physWorld)
+
+  const playerStart = { x: 50, y: 0.1, z: 50 }
 
   camera = mat4.create()
-  mat4.targetTo(camera, [50, 0, 60], [40, 0, 30], [0, 1, 0])
+  mat4.targetTo(camera, [0, 0, 0], [0, 0, -1], [0, 1, 0])
+  mat4.translate(camera, camera, [playerStart.x, playerStart.y, playerStart.z])
+  mat4.rotateY(camera, camera, 0.9)
+  playerBody.position.set(camera[12], camera[13], camera[14])
+  playerFacing = [camera[8], camera[9], camera[10]]
+  playerLight = [camera[12], camera[13], camera[14]]
 
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.CULL_FACE)
@@ -67,11 +87,20 @@ window.onload = async () => {
     const deltaTime = now - prevTime // Get smoothed time difference
     prevTime = now
 
-    handleInputs(gl, deltaTime)
+    // Process inputs and controls
+    handleInputs(gl, deltaTime, physWorld)
+
+    // Update physics
+    physWorld.fixedStep()
+
+    if (now % 2 < deltaTime) {
+      //console.log(facing)
+    }
 
     gl.clear(gl.COLOR_BUFFER_BIT)
     drawScene(gl, worldProg, instances, deltaTime)
     drawScene(gl, spriteProg, sprites, deltaTime, true)
+
     requestAnimationFrame(render)
   }
 
@@ -95,7 +124,7 @@ function drawScene(gl, programInfo, instances, deltaTime, billboard = false) {
 
   let uniforms = {
     u_viewInverse: camera, // Add the view inverse to the uniforms, we need it for shading
-    u_lightWorldPos: lightPos,
+    u_lightWorldPos: playerLight,
   }
 
   for (let instance of instances) {
@@ -160,6 +189,8 @@ function initInput(gl) {
   })
 
   function touchMouseHandler(e) {
+    e.preventDefault()
+
     let x = -1
     let y = -1
     if (e.touches) {
@@ -184,6 +215,8 @@ function initInput(gl) {
     if (y > gl.canvas.clientHeight - gl.canvas.clientHeight / 3) {
       inputMap['s'] = true
     }
+
+    return false
   }
 
   const canvas = document.querySelector('canvas')
@@ -202,43 +235,42 @@ function initInput(gl) {
 //
 // Handle any active input, called every frame
 //
-function handleInputs(gl, deltaTime) {
-  const oldPosX = camera[12]
-  const oldPosY = camera[14]
-  let moveSpeed = 40 * deltaTime
+function handleInputs(gl, deltaTime, physWorld) {
+  let moveSpeed = 1400 * deltaTime
   let turnSpeed = 3 * deltaTime
 
   if (inputMap['w'] || inputMap['ArrowUp']) {
-    mat4.translate(camera, camera, [0, 0, -moveSpeed])
+    playerBody.velocity.set(-playerFacing[0] * moveSpeed, -playerFacing[1] * moveSpeed, -playerFacing[2] * moveSpeed)
   }
 
   if (inputMap['s'] || inputMap['ArrowDown']) {
-    mat4.translate(camera, camera, [0, 0, moveSpeed])
+    playerBody.velocity.set(playerFacing[0] * moveSpeed, playerFacing[1] * moveSpeed, playerFacing[2] * moveSpeed)
   }
 
   if (inputMap['q'] || inputMap['z']) {
-    mat4.translate(camera, camera, [-moveSpeed / 2, 0, 0])
+    playerBody.velocity.set(-playerFacing[2] * moveSpeed, 0, playerFacing[0] * moveSpeed)
   }
 
   if (inputMap['e'] || inputMap['x']) {
-    mat4.translate(camera, camera, [moveSpeed / 2, 0, 0])
+    playerBody.velocity.set(playerFacing[2] * moveSpeed, 0, -playerFacing[0] * moveSpeed)
   }
 
   if (inputMap['a'] || inputMap['ArrowLeft']) {
     mat4.rotateY(camera, camera, turnSpeed)
+
+    // update facing
+    playerFacing = [camera[8], camera[9], camera[10]]
   }
 
   if (inputMap['d'] || inputMap['ArrowRight']) {
     mat4.rotateY(camera, camera, -turnSpeed)
+
+    // update facing
+    playerFacing = [camera[8], camera[9], camera[10]]
   }
 
-  const mapX = Math.floor(camera[12] / MAP_SIZE)
-  const mapY = Math.floor(camera[14] / MAP_SIZE)
-  if (map[mapY][mapX] == 1) {
-    camera[12] = oldPosX
-    camera[14] = oldPosY
-  }
-
-  // Move the light to the camera position
-  lightPos = [camera[12], 0.6, camera[14]]
+  // Move the camera & light to the player position
+  playerLight = [playerBody.position.x, playerBody.position.y + 3, playerBody.position.z]
+  camera[12] = playerBody.position.x
+  camera[14] = playerBody.position.z
 }

@@ -2,6 +2,8 @@ import { map, MAP_SIZE } from './map.mjs'
 import * as twgl from 'https://cdnjs.cloudflare.com/ajax/libs/twgl.js/4.19.5/twgl-full.module.js'
 import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
+import { Vec3 as CannonVec3, Body, Box, Material } from './cannon-es/dist/cannon-es.js'
+
 const baseUniforms = {
   u_lightColor: [1, 1, 1, 1],
 
@@ -11,7 +13,7 @@ const baseUniforms = {
   u_specularFactor: 0.5,
 }
 
-export function buildInstances(gl) {
+export function buildInstances(gl, physWorld) {
   const wallsBufferInfo = twgl.primitives.createCubeBufferInfo(gl, MAP_SIZE)
   const floorBufferInfo = twgl.primitives.createPlaneBufferInfo(gl, MAP_SIZE, MAP_SIZE)
 
@@ -70,6 +72,12 @@ export function buildInstances(gl) {
             location: [x * MAP_SIZE + MAP_SIZE / 2, 0, y * MAP_SIZE + MAP_SIZE / 2],
             textureIndex: 0,
           })
+          const box = new Body({
+            mass: 1000,
+            shape: new Box(new CannonVec3(5, 5, 5)),
+          })
+          box.position.set(x * MAP_SIZE + MAP_SIZE / 2, 0, y * MAP_SIZE + MAP_SIZE / 2)
+          physWorld.addBody(box)
           break
         case 2:
         case 0:
