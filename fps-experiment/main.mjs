@@ -5,7 +5,7 @@ import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
 
 import { World, Sphere, Body } from './cannon-es/dist/cannon-es.js'
 
-const VERSION = '0.1.2'
+const VERSION = '0.1.3'
 const FOV = 45
 const FAR_CLIP = 300
 
@@ -61,10 +61,11 @@ window.onload = async () => {
   physWorld.addBody(playerBody)
   console.log('🧪 Physics initialized')
 
+  // build everything we are going to render
   const { instances, sprites } = buildInstances(gl, physWorld)
 
+  // Setup player position and camera
   const playerStart = { x: 50, y: 0.1, z: 50 }
-
   camera = mat4.create()
   mat4.targetTo(camera, [0, 0, 0], [0, 0, -1], [0, 1, 0])
   mat4.translate(camera, camera, [playerStart.x, playerStart.y, playerStart.z])
@@ -87,8 +88,10 @@ window.onload = async () => {
     const deltaTime = now - prevTime // Get smoothed time difference
     prevTime = now
 
+    setOverlay(`FPS: ${Math.round(1 / deltaTime)}`)
+
     // Process inputs and controls
-    handleInputs(gl, deltaTime, physWorld)
+    handleInputs(deltaTime)
 
     // Update physics
     physWorld.fixedStep()
@@ -235,15 +238,16 @@ function initInput(gl) {
 //
 // Handle any active input, called every frame
 //
-function handleInputs(gl, deltaTime, physWorld) {
-  let moveSpeed = 2.4 / deltaTime
-  let turnSpeed = 3 * deltaTime
+function handleInputs(deltaTime) {
+  let moveSpeed = 64.0
+  let turnSpeed = 4.11 * deltaTime
 
   if (inputMap['w'] || inputMap['ArrowUp']) {
     playerBody.velocity.set(-playerFacing[0] * moveSpeed, -playerFacing[1] * moveSpeed, -playerFacing[2] * moveSpeed)
   }
 
   if (inputMap['s'] || inputMap['ArrowDown']) {
+    playerBody.velocity.set(playerFacing[0] * moveSpeed, playerFacing[1] * moveSpeed, playerFacing[2] * moveSpeed)
     playerBody.velocity.set(playerFacing[0] * moveSpeed, playerFacing[1] * moveSpeed, playerFacing[2] * moveSpeed)
   }
 
