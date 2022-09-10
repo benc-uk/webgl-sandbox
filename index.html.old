@@ -5,12 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Main Index</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>" />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=DM+Sans&display=swap");
+      @import url('https://fonts.googleapis.com/css2?family=DM+Sans&display=swap');
       body {
         margin: 0;
-        font-family: "DM Sans", sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 18px;
       }
       nav {
@@ -52,7 +54,7 @@
       code,
       kbd,
       samp {
-        font-family: "Consolas", monospace, monospace;
+        font-family: 'Consolas', monospace, monospace;
         font-size: 16px;
       }
       :not(pre) > code {
@@ -92,13 +94,8 @@
 
     <section>
       <div>📂 <a href="cube-twgl/">cube-twgl</a></div>
-      <div>📂 <a href="common/">common</a></div>
-      <div>📂 <a href="archive/">archive</a></div>
-      <div>📂 <a href="/"></a></div>
-      <div>📂 <a href="/"></a></div>
       <div>📂 <a href="spheres/">spheres</a></div>
       <div>📂 <a href="cube/">cube</a></div>
-      <div>📂 <a href="lib/">lib</a></div>
       <div>📂 <a href="hue-square/">hue-square</a></div>
       <div>📂 <a href="hello-world/">hello-world</a></div>
       <div>📂 <a href="fps-experiment/">fps-experiment</a></div>
@@ -106,7 +103,5 @@
     </section>
 
     <main></main>
-
-    
   </body>
 </html>
