@@ -239,7 +239,7 @@ function initInput(gl) {
 // Handle any active input, called every frame
 //
 function handleInputs(deltaTime) {
-  let moveSpeed = 64.0
+  let moveSpeed = 64.0 // Don't understand why don't need to multiply by deltaTime here
   let turnSpeed = 4.11 * deltaTime
 
   if (inputMap['w'] || inputMap['ArrowUp']) {
