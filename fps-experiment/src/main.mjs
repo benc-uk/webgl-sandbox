@@ -1,9 +1,9 @@
-import { fetchShaders, setOverlay } from '../lib/gl-utils.mjs'
+import { fetchShaders, setOverlay } from '../../lib/gl-utils.mjs'
 import { buildInstances } from './world.mjs'
-import * as twgl from 'https://cdnjs.cloudflare.com/ajax/libs/twgl.js/4.19.5/twgl-full.module.js'
-import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
+import * as twgl from '../lib/twgl/dist/4.x/twgl-full.module.js'
+import { mat4 } from '../lib/gl-matrix/esm/index.js'
 
-import { World, Sphere, Body } from './cannon-es/dist/cannon-es.js'
+import * as Cannon from '../lib/cannon-es/dist/cannon-es.js'
 
 const VERSION = '0.1.3'
 const FOV = 45
@@ -38,10 +38,10 @@ window.onload = async () => {
   let spriteProg = null
   try {
     // Note, we load shaders from external files
-    const { vertex: worldVert, fragment: worldFrag } = await fetchShaders('./world-vert.glsl', './world-frag.glsl')
+    const { vertex: worldVert, fragment: worldFrag } = await fetchShaders('shaders/world-vert.glsl', 'shaders/world-frag.glsl')
     worldProg = twgl.createProgramInfo(gl, [worldVert, worldFrag])
 
-    let { vertex: spriteVert, fragment: spriteFrag } = await fetchShaders('./sprite-vert.glsl', './sprite-frag.glsl')
+    let { vertex: spriteVert, fragment: spriteFrag } = await fetchShaders('shaders/sprite-vert.glsl', 'shaders/sprite-frag.glsl')
     spriteProg = twgl.createProgramInfo(gl, [spriteVert, spriteFrag])
 
     console.log('🎨 Loaded all shaders, GL is ready')
@@ -52,32 +52,29 @@ window.onload = async () => {
     return
   }
 
-  const physWorld = new World({})
-  playerBody = new Body({
+  const physWorld = new Cannon.World({})
+  playerBody = new Cannon.Body({
     mass: 0.001,
-    shape: new Sphere(2),
+    shape: new Cannon.Sphere(2),
     linearDamping: 0.999,
   })
   physWorld.addBody(playerBody)
   console.log('🧪 Physics initialized')
 
   // build everything we are going to render
-  const { instances, sprites } = buildInstances(gl, physWorld)
+  let { instances, sprites } = buildInstances(gl, physWorld)
 
   // Setup player position and camera
-  const playerStart = { x: 50, y: 0.1, z: 50 }
-  camera = mat4.create()
-  mat4.targetTo(camera, [0, 0, 0], [0, 0, -1], [0, 1, 0])
+  const playerStart = { x: 50, y: 0.1, z: 65 }
+  camera = mat4.targetTo(mat4.create(), [0, 0, 0], [0, 0, -1], [0, 1, 0])
   mat4.translate(camera, camera, [playerStart.x, playerStart.y, playerStart.z])
-  mat4.rotateY(camera, camera, 0.9)
+  mat4.rotateY(camera, camera, 0)
   playerBody.position.set(camera[12], camera[13], camera[14])
   playerFacing = [camera[8], camera[9], camera[10]]
   playerLight = [camera[12], camera[13], camera[14]]
 
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.CULL_FACE)
-  // gl.enable(gl.BLEND)
-  // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
   // Draw the scene repeatedly every frame
   console.log('♻️ Starting render loop with', instances.length + sprites.length, 'instances')
@@ -111,10 +108,12 @@ window.onload = async () => {
   requestAnimationFrame(render)
 }
 
+let time = 0.0
 //
 // Draw the scene!
 //
 function drawScene(gl, programInfo, instances, deltaTime, billboard = false) {
+  time += deltaTime
   twgl.resizeCanvasToDisplaySize(gl.canvas)
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
@@ -122,8 +121,7 @@ function drawScene(gl, programInfo, instances, deltaTime, billboard = false) {
   mat4.invert(view, camera)
 
   // Do this in every frame since the window and therefore the aspect ratio of projection matrix might change
-  const perspective = mat4.create()
-  mat4.perspective(perspective, (FOV * Math.PI) / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, FAR_CLIP)
+  const perspective = mat4.perspective(mat4.create(), (FOV * Math.PI) / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, FAR_CLIP)
 
   let uniforms = {
     u_viewInverse: camera, // Add the view inverse to the uniforms, we need it for shading
@@ -240,7 +238,7 @@ function initInput(gl) {
 //
 function handleInputs(deltaTime) {
   let moveSpeed = 64.0 // Don't understand why don't need to multiply by deltaTime here
-  let turnSpeed = 4.11 * deltaTime
+  let turnSpeed = 3.8 * deltaTime
 
   if (inputMap['w'] || inputMap['ArrowUp']) {
     playerBody.velocity.set(-playerFacing[0] * moveSpeed, -playerFacing[1] * moveSpeed, -playerFacing[2] * moveSpeed)

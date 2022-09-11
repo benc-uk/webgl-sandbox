@@ -37,7 +37,8 @@ vec2 light(vec3 normalN, vec3 surfaceToLightN, vec3 halfVector, float shininess)
 }
 
 void main(void) {
-  vec4 texel = texture2D(u_texture, v_texCoord);
+   vec4 texel = texture2D(u_texture, v_texCoord);
+  //vec4 texel = vec4(0.0, 0.5, 0.0, 1.0);
 
   vec3 normalN = normalize(v_normal);
   vec3 surfaceToLightN = normalize(v_surfaceToLight);
@@ -47,12 +48,13 @@ void main(void) {
   vec2 l = light(normalN, surfaceToLightN, halfVector, u_shininess);
 
   float attenuation = 1.0 / (1.0 + 8.00 * v_lightDist + 1.3 * (v_lightDist * v_lightDist));
-  attenuation = clamp(attenuation * 1000.0, 0.0, 1.0);
+  attenuation = clamp(attenuation * 1500.0, 0.0, 1.0);
 
   vec4 outColor = vec4(
     (texel * u_lightAmbient * attenuation + (u_lightColor * (texel * l.x * attenuation + u_specular * l.y * u_specularFactor * attenuation))).rgb, 
     texel.a 
   );
 
-  gl_FragColor = outColor; 
+  gl_FragColor = outColor;
+  //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

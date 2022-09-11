@@ -1,8 +1,9 @@
 import { map, MAP_SIZE } from './map.mjs'
-import * as twgl from 'https://cdnjs.cloudflare.com/ajax/libs/twgl.js/4.19.5/twgl-full.module.js'
-import * as mat4 from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/mat4.js'
+import { wallBufferInfo } from './geometry.mjs'
 
-import { Vec3 as CannonVec3, Body, Box, Material } from './cannon-es/dist/cannon-es.js'
+import * as twgl from '../lib/twgl/dist/4.x/twgl-full.module.js'
+import { mat4 } from '../lib/gl-matrix/esm/index.js'
+import * as Cannon from '../lib/cannon-es/dist/cannon-es.js'
 
 const baseUniforms = {
   u_lightColor: [1, 1, 1, 1],
@@ -77,9 +78,9 @@ export function buildInstances(gl, physWorld) {
             location: [x * MAP_SIZE + MAP_SIZE / 2, 0, y * MAP_SIZE + MAP_SIZE / 2],
             textureIndex: 0,
           })
-          const box = new Body({
+          const box = new Cannon.Body({
             mass: 1000,
-            shape: new Box(new CannonVec3(5, 5, 5)),
+            shape: new Cannon.Box(new Cannon.Vec3(5, 5, 5)),
           })
           box.position.set(x * MAP_SIZE + MAP_SIZE / 2, 0, y * MAP_SIZE + MAP_SIZE / 2)
           physWorld.addBody(box)

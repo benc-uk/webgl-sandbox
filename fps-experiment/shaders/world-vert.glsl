@@ -21,7 +21,7 @@ varying float v_lightDist;
 
 void main(){
   v_texCoord = texcoord;
-  
+
   v_position = (u_worldViewProjection * position);
   v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
   v_surfaceToLight = u_lightWorldPos - (u_world * position).xyz;
