@@ -51,6 +51,7 @@ void main() {
   scene[1].position.z = 5.0 * sin(u_time*0.8);
   scene[2].position.x = 4.0 * cos(-u_time*0.7);
   scene[2].position.z = 4.0 * sin(-u_time*0.7);
+  scene[2].position.y = 0.5 * sin(-u_time*4.0);
 
   vec3 ro = vec3(0.0, 0.0, 10.0);
   vec3 rd = normalize(vec3(screenPos - 0.5, -1.0));
