@@ -139,8 +139,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Crap needed for Monaco editor
   require.config({
     paths: {
-      vs: '/monaco/min/vs',
-      bithero: '/monaco/plugins', // Custom GLS plugin
+      vs: 'monaco/min/vs',
+      bithero: 'monaco/plugins', // Custom GLS plugin
     },
   })
 
