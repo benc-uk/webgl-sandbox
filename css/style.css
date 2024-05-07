@@ -1,0 +1,52 @@
+canvas {
+  background-color: black;
+  width: 80%;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+#outWrap {
+  display: flex;
+  justify-content: center;
+}
+
+body {
+  background-color: rgb(11, 11, 11);
+  color: rgb(212, 212, 212);
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#toolbar {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+}
+
+#shaderCode {
+  height: 50vh;
+}
+
+button {
+  background-color: rgb(44, 44, 44);
+  color: rgb(212, 212, 212);
+  border: 2px solid rgb(75, 75, 75);
+  padding: 2px;
+  padding-bottom: 5px;
+  margin: 2px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 20px;
+}
+
+button:hover {
+  background-color: rgb(53, 53, 53);
+}
+
+#error {
+  color: rgb(228, 67, 61);
+  padding: 5px;
+  margin: 15px;
+  background-color: rgb(32, 20, 19);
+}
