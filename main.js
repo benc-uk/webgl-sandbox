@@ -23,7 +23,6 @@ function run(fragShader) {
   gl = getGl(selector)
 
   const canvas = gl.canvas
-  const aspectRatio = canvas.clientWidth / canvas.clientHeight
 
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.BLEND)
@@ -39,11 +38,17 @@ function run(fragShader) {
   // ` + fragShader
 
   const progInfo = twgl.createProgramInfo(gl, [vertShader, fragShader], (msg) => {
-    showError(msg)
+    let niceMessage = ''
+    for (let line of msg.split('\n')) {
+      if (line.includes('^^^ ERROR')) niceMessage += line + '\n'
+    }
+
+    showError(niceMessage)
   })
 
   if (!progInfo) {
-    console.error('Failed to compile shader')
+    console.error('💥 Failed to compile shader!')
+    console.error(document.getElementById('error').innerText)
     return
   }
 
@@ -51,10 +56,7 @@ function run(fragShader) {
 
   // Add a single quad to be rendered
   const arrays = {
-    position: {
-      numComponents: 2,
-      data: [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1],
-    },
+    position: [-1, -1, 0, 1, -1, 0, -1, 1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0],
   }
 
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays)
@@ -63,16 +65,13 @@ function run(fragShader) {
   let totalTime = 0
   let lastTime = 0
 
+  twgl.resizeCanvasToDisplaySize(gl.canvas)
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+
   // Render loop
   function render(time) {
-    // get the time delta between frames
     const deltaTime = time - lastTime
     lastTime = time
-
-    // If paused, don't update the time
-    if (!paused) {
-      totalTime += deltaTime / 1000
-    }
 
     // When running is false, clear the screen and exit render loop
     if (!running) {
@@ -82,9 +81,9 @@ function run(fragShader) {
     }
 
     const uniforms = {
-      u_time: totalTime,
+      u_time: paused ? totalTime : (totalTime += deltaTime / 1000),
       u_resolution: [canvas.width, canvas.height],
-      u_aspect: aspectRatio,
+      u_aspect: [canvas.clientWidth / canvas.clientHeight],
     }
 
     gl.viewport(0, 0, canvas.width, canvas.height)
@@ -120,8 +119,17 @@ function showError(errMessage = '') {
 
 // Startup everything when the DOM is ready
 window.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 Initialising...')
+  console.log('🚦 Initialising...')
   hideError()
+
+  document.getElementById('fullscreen').addEventListener('click', () => {
+    const gl = getGl(selector)
+    gl.canvas.requestFullscreen()
+    setTimeout(() => {
+      twgl.resizeCanvasToDisplaySize(gl.canvas)
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+    }, 200)
+  })
 
   document.getElementById('stop').addEventListener('click', stop)
   document.getElementById('pause').addEventListener('click', pause)
@@ -153,7 +161,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       theme: 'vs-dark',
       language: 'glsl',
       minimap: { enabled: false },
-      automaticLayout: true,
     })
 
     editor.focus()
