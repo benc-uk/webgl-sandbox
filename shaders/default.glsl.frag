@@ -1,5 +1,4 @@
 #version 300 es
-
 precision highp float;
 
 uniform vec2 u_resolution;
@@ -30,17 +29,12 @@ float ambient = 0.04;
 // The scene is composed of array of spheres
 const int numSpheres = 20;
 Sphere scene[numSpheres];
-
-void initScene() {
-  scene[0] = Sphere(vec3(0.0, 0.0, 0.0), 3.0, vec3(0.2, 0.1, 1.0), 30.0);
-  scene[1] = Sphere(vec3(0.0, 1.0, 0.0), 1.2, vec3(0.9, 0.2, 0.1), 100.0);
-  scene[2] = Sphere(vec3(0.0, -1.0, 0.0), 0.6, vec3(0.1, 0.7, 0.1), 6.0);
-}
-
 int hitIndex = -1;
 
 void main() {
-  initScene();
+  scene[0] = Sphere(vec3(0.0, 0.0, 0.0), 3.0, vec3(0.2, 0.1, 1.0), 30.0);
+  scene[1] = Sphere(vec3(0.0, 1.0, 0.0), 1.2, vec3(0.9, 0.2, 0.1), 100.0);
+  scene[2] = Sphere(vec3(0.0, -1.0, 0.0), 0.6, vec3(0.1, 0.7, 0.1), 6.0);
 
   vec2 screenPos = gl_FragCoord.xy / u_resolution.xy;
   // Fix aspect ratio
