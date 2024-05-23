@@ -5,6 +5,7 @@ import * as twgl from 'twgl.js'
 
 import vertShader from './shaders/base.glsl.vert?raw'
 import defaultShader from './shaders/default.glsl.frag?raw'
+import boilerPlate from './shaders/boilerplate.glsl?raw'
 
 let gl
 let running = false
@@ -21,21 +22,12 @@ function run(fragShader) {
 
   hideError()
   gl = getGl(selector)
-
-  const canvas = gl.canvas
-
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.BLEND)
+  const canvas = gl.canvas
 
   // Add extra & boilerplate code to the fragment shader
-  // fragShader =
-  //   `#version 300 es
-  // precision highp float;
-  // uniform vec2 u_resolution;
-  // uniform float u_time;
-  // uniform float u_aspect;
-  // out vec4 fragColor;
-  // ` + fragShader
+  fragShader = boilerPlate + fragShader
 
   const progInfo = twgl.createProgramInfo(gl, [vertShader, fragShader], (msg) => {
     let niceMessage = ''
@@ -44,11 +36,11 @@ function run(fragShader) {
     }
 
     showError(niceMessage)
+    console.error('💥 Failed to compile shader!')
+    console.error(msg)
   })
 
   if (!progInfo) {
-    console.error('💥 Failed to compile shader!')
-    console.error(document.getElementById('error').innerText)
     return
   }
 
@@ -65,11 +57,10 @@ function run(fragShader) {
   let totalTime = 0
   let lastTime = 0
 
-  twgl.resizeCanvasToDisplaySize(gl.canvas)
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
-
   // Render loop
   function render(time) {
+    twgl.resizeCanvasToDisplaySize(gl.canvas)
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
     const deltaTime = time - lastTime
     lastTime = time
 
