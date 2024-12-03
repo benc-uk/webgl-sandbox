@@ -1,9 +1,28 @@
+/* define colour vars in root */
+
+:root {
+  --nearblack: rgb(11, 11, 11);
+  --primary: rgb(212, 212, 212);
+  --secondary: rgb(44, 44, 44);
+  --tertiary: rgb(75, 75, 75);
+  --error: rgb(228, 67, 61);
+}
+
+body {
+  background-color: var(--nearblack);
+  color: var(--primary);
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 canvas {
   background-color: black;
   width: 80%;
-  max-height: 70vh;
+  max-height: 60vh;
   object-fit: contain;
 }
+
 /* media query for smaller screens */
 @media (max-width: 1000px) {
   canvas {
@@ -11,17 +30,25 @@ canvas {
   }
 }
 
-#outWrap {
-  display: flex;
-  justify-content: center;
+button {
+  background-color: var(--secondary);
+  color: var(--primary);
+  border: 2px solid var(--tertiary);
+  width: 45px;
+  height: 45px;
+  margin: 3px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 20px;
 }
 
-body {
-  background-color: rgb(11, 11, 11);
-  color: rgb(212, 212, 212);
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+button:hover {
+  background-color: var(--tertiary);
+}
+
+#canvas-wrap {
+  display: flex;
+  justify-content: center;
 }
 
 #toolbar {
@@ -30,31 +57,16 @@ body {
   padding: 5px;
 }
 
-#shaderCode {
+#shader-code {
   height: 50vh;
 }
 
-button {
-  background-color: rgb(44, 44, 44);
-  color: rgb(212, 212, 212);
-  border: 2px solid rgb(75, 75, 75);
-  padding: 2px;
-  padding-bottom: 5px;
-  margin: 2px;
-  cursor: pointer;
-  border-radius: 3px;
-  font-size: 20px;
-}
-
-button:hover {
-  background-color: rgb(53, 53, 53);
-}
-
 #error {
-  color: rgb(228, 67, 61);
+  color: var(--error);
   padding: 9px;
   margin: 15px;
-  background-color: rgb(17, 17, 17);
-  border: 3px solid rgb(228, 67, 61);
+  background-color: var(--nearblack);
+  border: 3px solid var(--error);
+  border-radius: 5px;
   font-family: Consolas, 'Courier New', Courier, monospace;
 }

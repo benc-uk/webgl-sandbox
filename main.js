@@ -14,7 +14,7 @@ let editor
 const selector = 'canvas'
 
 // Main function to run the shader
-function run(fragShader) {
+function startRun(fragShader) {
   if (!fragShader) {
     showError('No fragment shader provided')
     return
@@ -119,6 +119,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => {
       twgl.resizeCanvasToDisplaySize(gl.canvas)
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+
+      resizeEditor()
     }, 200)
   })
 
@@ -131,9 +133,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     // This trick allows the render loop to catch the running flag and exit
     // Without this you get a lot of WebGL errors
     setTimeout(() => {
-      run(editor.getValue())
+      startRun(editor.getValue())
     }, 50)
   })
+
+  window.addEventListener('resize', resizeEditor)
 
   // Crap needed for Monaco editor
   require.config({
@@ -143,15 +147,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
   })
 
-  // Load the Monaco editor
+  // Load the Monaco editor, it still uses some funky old school AMD loader
   require(['vs/editor/editor.main'], function () {
     require(['bithero/glsl'], function () {})
 
-    editor = monaco.editor.create(document.getElementById('shaderCode'), {
-      value: defaultShader, //localStorage.getItem('shaderText') || defaultShader,
+    editor = monaco.editor.create(document.getElementById('shader-code'), {
+      value: localStorage.getItem('shaderText') || defaultShader,
       theme: 'vs-dark',
       language: 'glsl',
       minimap: { enabled: false },
+      automaticLayout: true,
+      scrollBeyondLastLine: false,
     })
 
     editor.focus()
@@ -161,6 +167,23 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
 
     // Run the shader when the editor is loaded
-    run(editor.getValue())
+    startRun(editor.getValue())
   })
+
+  setTimeout(() => {
+    resizeEditor()
+  }, 200)
 })
+
+function resizeEditor() {
+  const editor = document.getElementById('shader-code')
+  const canvas = document.getElementById('output')
+
+  const width = window.innerWidth - 0
+  const height = window.innerHeight - canvas.height - 80
+  console.log(`innerHeight: ${window.innerHeight}`)
+  console.log(`canvas size: ${canvas.height}`)
+
+  editor.style.height = `${height}px`
+  editor.style.width = `${width}px`
+}

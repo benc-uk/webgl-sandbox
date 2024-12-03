@@ -1,33 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="shortcut icon" href="favicon.png" type="image/png" />
 
-    <script src="/monaco/min/vs/loader.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="shortcut icon" href="favicon.png" type="image/png" />
 
-    <title>GPU Playground</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/main.js"></script>
+  <script src="/monaco/min/vs/loader.js"></script>
 
-    <div id="outWrap">
-      <canvas id="output" width="1920" height="1080"></canvas>
-    </div>
+  <title>GPU Playground</title>
+</head>
 
-    <div id="error"></div>
+<body>
+  <div id="app"></div>
+  <script type="module" src="main.js"></script>
 
-    <div id="toolbar">
-      <button id="run">▶️</button>
-      <button id="stop">⏹️</button>
-      <button id="pause">⏯️</button>
-      <button id="load">📂</button>
-      <button id="fullscreen">📷</button>
-    </div>
+  <div id="canvas-wrap">
+    <canvas id="output" width="1920" height="1080"></canvas>
+  </div>
 
-    <div id="shaderCode"></div>
-  </body>
+  <div id="error"></div>
+
+  <div id="toolbar">
+    <button id="run">▶️</button>
+    <button id="stop">⏹️</button>
+    <button id="pause">⏯️</button>
+    <button id="load">📂</button>
+    <button id="fullscreen">📷</button>
+  </div>
+
+  <div id="shader-code"></div>
+</body>
+
 </html>
