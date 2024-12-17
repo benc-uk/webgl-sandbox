@@ -13,7 +13,11 @@ let paused = false
 let editor
 const selector = 'canvas'
 
-// Main function to run the shader
+const $ = document.querySelector.bind(document)
+const overlay = $('#overlay')
+const error = $('#error')
+
+// Starts the shader and kicks off the render loop
 function startRun(fragShader) {
   if (!fragShader) {
     showError('No fragment shader provided')
@@ -21,6 +25,9 @@ function startRun(fragShader) {
   }
 
   hideError()
+  running = true
+  overlay.style.display = 'none'
+
   gl = getGl(selector)
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.BLEND)
@@ -57,7 +64,7 @@ function startRun(fragShader) {
   let totalTime = 0
   let lastTime = 0
 
-  // Render loop
+  // Inner function to render the shader
   function render(time) {
     twgl.resizeCanvasToDisplaySize(gl.canvas)
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
@@ -87,25 +94,29 @@ function startRun(fragShader) {
     requestAnimationFrame(render)
   }
 
-  running = true
   requestAnimationFrame(render)
 }
 
+// Stop the shader
 function stop() {
   running = false
+  overlay.style.display = 'block'
 }
 
+// Pause the shader
 function pause() {
   paused = !paused
 }
 
+// Hide the error message
 function hideError() {
-  document.getElementById('error').style.display = 'none'
+  error.style.display = 'none'
 }
 
+// Show an error message
 function showError(errMessage = '') {
-  document.getElementById('error').innerText = errMessage
-  document.getElementById('error').style.display = 'block'
+  error.innerText = errMessage
+  error.style.display = 'block'
 }
 
 // Startup everything when the DOM is ready
@@ -113,7 +124,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   console.log('🚦 Initialising...')
   hideError()
 
-  document.getElementById('fullscreen').addEventListener('click', () => {
+  $('#fullscreen').addEventListener('click', () => {
     const gl = getGl(selector)
     gl.canvas.requestFullscreen()
     setTimeout(() => {
@@ -124,9 +135,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     }, 200)
   })
 
-  document.getElementById('stop').addEventListener('click', stop)
-  document.getElementById('pause').addEventListener('click', pause)
-  document.getElementById('run').addEventListener('click', () => {
+  $('#stop').addEventListener('click', stop)
+  $('#pause').addEventListener('click', pause)
+  $('#run').addEventListener('click', () => {
     running = false
     paused = false
 
@@ -151,7 +162,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   require(['vs/editor/editor.main'], function () {
     require(['bithero/glsl'], function () {})
 
-    editor = monaco.editor.create(document.getElementById('shader-code'), {
+    editor = monaco.editor.create($('#shader-code'), {
       value: localStorage.getItem('shaderText') || defaultShader,
       theme: 'vs-dark',
       language: 'glsl',
@@ -175,14 +186,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   }, 200)
 })
 
+// Resize the editor to fit properly under the canvas
 function resizeEditor() {
-  const editor = document.getElementById('shader-code')
-  const canvas = document.getElementById('output')
+  const editor = $('#shader-code')
+  const canvas = $(selector)
 
   const width = window.innerWidth - 0
   const height = window.innerHeight - canvas.height - 80
-  console.log(`innerHeight: ${window.innerHeight}`)
-  console.log(`canvas size: ${canvas.height}`)
 
   editor.style.height = `${height}px`
   editor.style.width = `${width}px`
