@@ -132,6 +132,24 @@ li:hover {
 
 .flex {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: row;
+}
+
+.note {
+  font-size: 0.9rem;
+  color: var(--tertiary);
+  margin-left: auto;
+}
+
+a {
+  color: var(--lighter);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--primary);
+}
+
+a:visited {
+  color: var(--lighter);
 }
