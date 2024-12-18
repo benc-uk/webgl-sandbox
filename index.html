@@ -13,12 +13,23 @@
 </head>
 
 <body>
-  <div id="app"></div>
   <script type="module" src="main.js"></script>
 
   <div id="canvas-wrap">
-    <canvas id="output" width="1920" height="1080"></canvas>
+    <canvas id="output" tabindex='1' width="1920" height="1080"></canvas>
+
     <div id="overlay">STOPPED</div>
+
+    <div id="file-sel">
+      <div>&nbsp;Load example:</div>
+      <ul>
+        <li class="file" data-file="blank">Blank</li>
+        <li class="file" data-file="circles">Circles</li>
+        <li class="file" data-file="colours">Colours</li>
+        <li class="file" data-file="raytracer">Raytracer</li>
+      </ul>
+      <div class="flex"><button id="load-cancel">CANCEL</button></div>
+    </div>
   </div>
 
   <div id="error"></div>

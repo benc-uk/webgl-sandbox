@@ -1,26 +1,29 @@
 import './css/style.css'
-import { getGl } from './lib/gl.js'
+import { getGl, resize } from './lib/gl.js'
 
 import * as twgl from 'twgl.js'
 
 import vertShader from './shaders/base.glsl.vert?raw'
-import defaultShader from './shaders/default.glsl.frag?raw'
 import boilerPlate from './shaders/boilerplate.glsl?raw'
 
 let gl
+let editor
 let running = false
 let paused = false
-let editor
 const selector = 'canvas'
 
 const $ = document.querySelector.bind(document)
 const overlay = $('#overlay')
 const error = $('#error')
 
-// Starts the shader and kicks off the render loop
-function startRun(fragShader) {
-  if (!fragShader) {
-    showError('No fragment shader provided')
+/**
+ * Start the shader, including the main inner render loop
+ * @param {string} shaderCode - The fragment shader code
+ */
+function startRun(shaderCode) {
+  shaderCode = shaderCode.trim()
+  if (!shaderCode) {
+    showError("No fragment shader code! That's not going to work...")
     return
   }
 
@@ -34,17 +37,17 @@ function startRun(fragShader) {
   const canvas = gl.canvas
 
   // Add extra & boilerplate code to the fragment shader
-  fragShader = boilerPlate + fragShader
+  shaderCode = boilerPlate + shaderCode
 
-  const progInfo = twgl.createProgramInfo(gl, [vertShader, fragShader], (msg) => {
-    let niceMessage = ''
-    for (let line of msg.split('\n')) {
-      if (line.includes('^^^ ERROR')) niceMessage += line + '\n'
+  const progInfo = twgl.createProgramInfo(gl, [vertShader, shaderCode], (errMessage) => {
+    let niceErr = ''
+    for (let line of errMessage.split('\n')) {
+      if (line.includes('^^^ ERROR')) niceErr += line + '\n'
     }
 
-    showError(niceMessage)
+    showError(niceErr)
     console.error('💥 Failed to compile shader!')
-    console.error(msg)
+    console.error(errMessage)
   })
 
   if (!progInfo) {
@@ -64,10 +67,11 @@ function startRun(fragShader) {
   let totalTime = 0
   let lastTime = 0
 
-  // Inner function to render the shader
+  /**
+   * Inner function to render the shader
+   * @param {number} time
+   */
   function render(time) {
-    twgl.resizeCanvasToDisplaySize(gl.canvas)
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
     const deltaTime = time - lastTime
     lastTime = time
 
@@ -94,6 +98,7 @@ function startRun(fragShader) {
     requestAnimationFrame(render)
   }
 
+  // It's all about this one line of code
   requestAnimationFrame(render)
 }
 
@@ -113,78 +118,14 @@ function hideError() {
   error.style.display = 'none'
 }
 
-// Show an error message
+/**
+ * Show an error message
+ * @param {string} errMessage
+ */
 function showError(errMessage = '') {
   error.innerText = errMessage
   error.style.display = 'block'
 }
-
-// Startup everything when the DOM is ready
-window.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚦 Initialising...')
-  hideError()
-
-  $('#fullscreen').addEventListener('click', () => {
-    const gl = getGl(selector)
-    gl.canvas.requestFullscreen()
-    setTimeout(() => {
-      twgl.resizeCanvasToDisplaySize(gl.canvas)
-      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
-
-      resizeEditor()
-    }, 200)
-  })
-
-  $('#stop').addEventListener('click', stop)
-  $('#pause').addEventListener('click', pause)
-  $('#run').addEventListener('click', () => {
-    running = false
-    paused = false
-
-    // This trick allows the render loop to catch the running flag and exit
-    // Without this you get a lot of WebGL errors
-    setTimeout(() => {
-      startRun(editor.getValue())
-    }, 50)
-  })
-
-  window.addEventListener('resize', resizeEditor)
-
-  // Crap needed for Monaco editor
-  require.config({
-    paths: {
-      vs: 'monaco/min/vs',
-      bithero: 'monaco/plugins', // Custom GLS plugin
-    },
-  })
-
-  // Load the Monaco editor, it still uses some funky old school AMD loader
-  require(['vs/editor/editor.main'], function () {
-    require(['bithero/glsl'], function () {})
-
-    editor = monaco.editor.create($('#shader-code'), {
-      value: localStorage.getItem('shaderText') || defaultShader,
-      theme: 'vs-dark',
-      language: 'glsl',
-      minimap: { enabled: false },
-      automaticLayout: true,
-      scrollBeyondLastLine: false,
-    })
-
-    editor.focus()
-
-    editor.onDidChangeModelContent(() => {
-      localStorage.setItem('shaderText', editor.getValue())
-    })
-
-    // Run the shader when the editor is loaded
-    startRun(editor.getValue())
-  })
-
-  setTimeout(() => {
-    resizeEditor()
-  }, 200)
-})
 
 // Resize the editor to fit properly under the canvas
 function resizeEditor() {
@@ -197,3 +138,134 @@ function resizeEditor() {
   editor.style.height = `${height}px`
   editor.style.width = `${width}px`
 }
+
+/**
+ * @param {string} name
+ * @returns {Promise<string>}
+ */
+async function loadShader(name) {
+  try {
+    const resp = await fetch(`shaders/${name}.glsl.frag`)
+    if (!resp.ok || resp.status !== 200) {
+      throw new Error(`Failed to load shader file: ${name}`)
+    }
+
+    const shaderText = await resp.text()
+    localStorage.setItem('shaderText', shaderText)
+    return shaderText
+  } catch (e) {
+    showError(e)
+    return
+  }
+}
+
+// Entry point for the whole app
+window.addEventListener('DOMContentLoaded', async () => {
+  console.log('🚦 Initialising...')
+  hideError()
+
+  $('#fullscreen').addEventListener('click', () => {
+    const gl = getGl(selector)
+    gl.canvas.requestFullscreen()
+
+    setTimeout(() => {
+      resize()
+      resizeEditor()
+    }, 200)
+  })
+
+  $('#output').addEventListener('fullscreenchange', (e) => {
+    resize()
+    resizeEditor()
+  })
+
+  window.addEventListener('resize', () => {
+    resize()
+    resizeEditor()
+  })
+
+  $('#load-cancel').addEventListener('click', () => {
+    $('#file-sel').style.display = 'none'
+  })
+
+  $('#load').addEventListener('click', () => {
+    $('#file-sel').style.display = 'block'
+  })
+
+  $('#stop').addEventListener('click', stop)
+
+  $('#pause').addEventListener('click', pause)
+
+  $('#run').addEventListener('click', () => {
+    running = false
+    paused = false
+
+    // This trick allows the render loop to catch the running flag and exit
+    // Without this you get a lot of WebGL errors, don't ask, it works...
+    setTimeout(() => {
+      startRun(editor.getValue())
+    }, 50)
+  })
+
+  // Click on a shader file to load it, these are in li elements
+  document.querySelectorAll('.file').forEach((fileEl) => {
+    fileEl.addEventListener('click', async () => {
+      const shaderText = await loadShader(fileEl.dataset.file)
+      editor.setValue(shaderText)
+      $('#file-sel').style.display = 'none'
+      $('#run').click()
+    })
+  })
+
+  $('#output').addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      pause()
+    }
+  })
+
+  // Crap needed for Monaco editor
+  require.config({
+    paths: {
+      vs: 'monaco/min/vs',
+      bithero: 'monaco/plugins', // Custom GLS plugin
+    },
+  })
+
+  // Load the Monaco editor, it still uses some funky old school AMD loader
+  require(['vs/editor/editor.main'], async function () {
+    require(['bithero/glsl'], function () {})
+
+    let shaderText = localStorage.getItem('shaderText')
+    if (shaderText === null) {
+      shaderText = await loadShader('raytracer')
+    }
+
+    editor = monaco.editor.create($('#shader-code'), {
+      value: shaderText,
+      theme: 'vs-dark',
+      language: 'glsl',
+      minimap: { enabled: false },
+      automaticLayout: true,
+      scrollBeyondLastLine: false,
+    })
+
+    editor.focus()
+
+    // Trap Ctrl+S to run the shader and prevent the browser from saving the file
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+      $('#run').click()
+    })
+
+    editor.onDidChangeModelContent(() => {
+      localStorage.setItem('shaderText', editor.getValue())
+    })
+
+    // Run the shader when the editor is loaded
+    startRun(editor.getValue())
+  })
+
+  setTimeout(() => {
+    resize()
+    resizeEditor()
+  }, 200)
+})
