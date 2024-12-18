@@ -20,7 +20,7 @@ float sphereHit(vec3 ro, vec3 rd, Sphere sph) {
 
 // Some global variables
 vec3 lightPos = vec3(11.0, 8.0, 10.0);
-vec3 bgColor = vec3(0.3, 0.3, 0.9);
+vec3 bgColor = vec3(0.6, 0.9, 0.9);
 float ambient = 0.04;
 
 const int numSpheres = 3;

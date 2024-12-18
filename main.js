@@ -146,9 +146,9 @@ function resizeEditor() {
  * @param {string} name
  * @returns {Promise<string>}
  */
-async function loadShader(name) {
+async function loadSample(name) {
   try {
-    const resp = await fetch(`shaders/${name}.glsl.frag`)
+    const resp = await fetch(`samples/${name}.glsl.frag`)
     if (!resp.ok || resp.status !== 200) {
       throw new Error(`Failed to load shader file: ${name}`)
     }
@@ -213,7 +213,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Click on a shader file to load it, these are in li elements
   document.querySelectorAll('.file').forEach((fileEl) => {
     fileEl.addEventListener('click', async () => {
-      const shaderText = await loadShader(fileEl.dataset.file)
+      const shaderText = await loadSample(fileEl.dataset.file)
       editor.setValue(shaderText)
       $('#file-sel').style.display = 'none'
       $('#run').click()
@@ -240,7 +240,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     let shaderText = localStorage.getItem('shaderText')
     if (shaderText === null) {
-      shaderText = await loadShader('raytracer')
+      shaderText = await loadSample('raytracer')
     }
 
     editor = monaco.editor.create($('#shader-code'), {
