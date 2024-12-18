@@ -44,6 +44,7 @@ function startRun(shaderCode) {
     for (let line of errMessage.split('\n')) {
       if (line.includes('^^^ ERROR')) niceErr += line + '\n'
     }
+    niceErr = niceErr.replaceAll('^^^', '⚠️')
 
     showError(niceErr)
     console.error('💥 Failed to compile shader!')
@@ -116,6 +117,7 @@ function pause() {
 // Hide the error message
 function hideError() {
   error.style.display = 'none'
+  resizeEditor()
 }
 
 /**
@@ -125,6 +127,7 @@ function hideError() {
 function showError(errMessage = '') {
   error.innerText = errMessage
   error.style.display = 'block'
+  resizeEditor()
 }
 
 // Resize the editor to fit properly under the canvas

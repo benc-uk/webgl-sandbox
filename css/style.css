@@ -70,9 +70,15 @@ button:hover {
 }
 
 #error {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
   color: var(--error);
   padding: 9px;
   margin: 15px;
+  font-size: 1.2rem;
   background-color: var(--nearblack);
   border: 3px solid var(--error);
   border-radius: 5px;
