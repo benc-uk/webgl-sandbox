@@ -6,18 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="shortcut icon" href="favicon.png" type="image/png" />
 
+  <!-- Monaco isn't ESM compatible, need to use a script tag like some 2002 developer -->
   <script src="/monaco/min/vs/loader.js"></script>
+  <script type="module" src="src/main.js"></script>
 
-  <title>GPU Playground</title>
+  <title>WebGL Shader Playground</title>
 </head>
 
 <body>
-  <script type="module" src="main.js"></script>
-
   <div id="canvas-wrap">
     <canvas id="output" tabindex='1' width="1920" height="1080"></canvas>
-
-    <div id="overlay">STOPPED</div>
 
     <div id="file-sel">
       <div>&nbsp;Load example:</div>
@@ -27,23 +25,25 @@
         <li class="file" data-file="colours">Colours</li>
         <li class="file" data-file="raytracer">Raytracer</li>
       </ul>
-      <div class="flex"><button id="load-cancel">CANCEL</button></div>
+      <div class="flex center"><button id="load-cancel">CANCEL</button></div>
     </div>
   </div>
 
   <div id="error"></div>
 
   <div id="toolbar" class="flex">
-    <button id="run">▶️</button>
-    <button id="stop">⏹️</button>
-    <button id="pause">⏯️</button>
-    <button id="load">📂</button>
-    <button id="fullscreen">📷</button>
-    <!-- <button id="temp">🔊</button> -->
-    <div class="note">Ben Coleman, 2024 <a href="https://github.com/benc-uk/gpu-playground">[GitHub]</a></div>
+    <button id="run"><i class="fa-fw fa-solid fa-play"></i></button>
+    <button id="stop"><i class="fa-fw fa-solid fa-stop"></i></button>
+    <button id="pause"><i class="fa-fw fa-solid fa-pause"></i></button>
+    <button id="load"><i class="fa-fw fa-solid fa-folder"></i></button>
+    <button id="fullscreen"><i class="fa-fw fa-solid fa-camera"></i></button>
+    <button id="temp"><i class="fa-fw fa-solid fa-poo"></i></button>
+    <div class="note">Ben Coleman, 2024 <a href="https://github.com/benc-uk/gpu-playground" target="_blank">[GitHub]</a>
+    </div>
   </div>
 
-  <div id="shader-code"></div>
+  <!-- Monaco code editor -->
+  <div id="code"></div>
 </body>
 
 </html>

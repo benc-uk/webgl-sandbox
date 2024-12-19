@@ -1,19 +1,17 @@
 {
-  "name": "gpu-playground",
+  "name": "webgl-shader-playground",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
+  "author": "Ben Coleman",
+  "license": "MIT",
   "scripts": {
-    "dev": "vite",
+    "start": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "serve": "vite serve"
+    "preview": "vite preview"
   },
   "devDependencies": {
     "twgl.js": "^5.5.4",
-    "vite": "^5.2.0"
-  },
-  "dependencies": {
-    "@bithero/monaco-glsl": "^1.1.0"
+    "vite": "^6.0.3"
   }
 }
