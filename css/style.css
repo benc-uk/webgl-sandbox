@@ -85,22 +85,28 @@ button:hover {
   position: absolute;
   top: 100px;
   font-size: 18px;
-  color: var(--lighter);
-  background-color: var(--nearblack);
-  border: 3px solid var(--tertiary);
-  border-radius: 10px;
+  color: var(--primary);
   width: 300px;
   display: none;
+  padding: 15px;
+
+  /* From https://css.glass */
+  background: rgba(0, 0, 0, 0.59);
+  border-radius: 9px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(11.8px);
+  -webkit-backdrop-filter: blur(11.8px);
 }
 
 ul {
   padding: 0;
-  margin: 0;
+  margin: 10px 0px;
   max-height: 200px;
   height: 200px;
   overflow-y: scroll;
   border-top: 2px solid var(--secondary);
   border-bottom: 2px solid var(--secondary);
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 li {
@@ -117,8 +123,8 @@ li:before {
 }
 
 li:hover {
-  background-color: var(--secondary);
-  color: var(--primary);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
 }
 
 .flex {
