@@ -4,7 +4,7 @@ import { getShaderText, saveShaderText, loadSample } from './storage.js'
 export let editor
 export const selector = '#output'
 
-export function initEditor() {
+export function initEditor(doneCallback) {
   if (editor) return
 
   // Crap needed for Monaco editor
@@ -18,6 +18,10 @@ export function initEditor() {
   // Load the Monaco editor, it still uses some funky old school AMD loader
   require(['vs/editor/editor.main'], async function () {
     require(['bithero/glsl'], function () {})
+
+    if (doneCallback) {
+      monaco.editor.onDidCreateEditor(doneCallback)
+    }
 
     let shaderText = getShaderText()
     if (shaderText === null) {

@@ -64,13 +64,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   onKeyDownWithCode('#output', 'Space', pause)
 
-  // Initialise the Monaco text editor
-  initEditor()
+  // Initialise the Monaco text editor, and then run the shader when it's ready
+  initEditor(runPressed)
 
-  // Resize everything & start the shader
-  setTimeout(() => {
-    runPressed()
-  }, 200)
+  // setTimeout(() => {
+  //   runPressed()
+  // }, 200)
 
   // TEMP CODE HERE
   // const ctx = new AudioContext()
