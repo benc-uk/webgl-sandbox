@@ -19,7 +19,7 @@ export function initEditor() {
   require(['vs/editor/editor.main'], async function () {
     require(['bithero/glsl'], function () {})
 
-    const shaderText = getShaderText()
+    let shaderText = getShaderText()
     if (shaderText === null) {
       shaderText = await loadSample('raytracer')
     }

@@ -4,7 +4,7 @@ import '../lib/fontawesome/css/fontawesome.css'
 
 import { getGl, resize } from '../lib/gl.js'
 import { $, $$, onClick, hide, show, onKeyDownWithCode, onFullscreenChange } from '../lib/dom.js'
-import { pause, runPressed, stop, hideError } from './app.js'
+import { pause, runPressed, stop, hideError, showError } from './app.js'
 import { initEditor, selector, editor, resizeEditor } from './editor.js'
 import { loadSample } from './storage.js'
 
@@ -37,6 +37,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   onClick('#load', () => {
+    hideError()
     show('#file-sel')
   })
 
@@ -46,14 +47,18 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   onClick('#run', runPressed)
 
-  // A fake file loader, just loads a sample shader from the public/samples folder
   $$('.file').forEach((fileEl) => {
+    // A file loader, fetches file from the public/samples folder
     fileEl.addEventListener('click', async () => {
-      const shaderText = await loadSample(fileEl.dataset.file)
-      editor.setValue(shaderText)
-      hide('#file-sel')
-
-      $('#run').click()
+      try {
+        const shaderText = await loadSample(fileEl.dataset.file)
+        editor.setValue(shaderText)
+        hide('#file-sel')
+        $('#run').click()
+      } catch (err) {
+        hide('#file-sel')
+        showError(err.message)
+      }
     })
   })
 

@@ -134,8 +134,7 @@ export function hideError() {
  * Show an error message
  * @param {string} errMessage
  */
-function showError(errMessage = '') {
+export function showError(errMessage = '') {
   setText('#error', errMessage)
   show('#error')
-  resizeEditor()
 }
