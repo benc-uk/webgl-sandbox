@@ -30,7 +30,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       $('#audio-devices').add(option)
     }
 
-    onChange('#audio-devices', async () => {
+    onClick('#audio-in-open', async () => {
       const deviceId = $('#audio-devices').value
       const smoothing = parseFloat($('#audio-smoothing').value)
       const gain = parseFloat($('#audio-gain').value)
@@ -60,6 +60,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     }, 200)
   })
 
+  onClick('#audio', () => {
+    hideError()
+    show('#audio-dialog')
+  })
+
   onFullscreenChange('#output', () => {
     resize()
     resizeEditor()
@@ -77,6 +82,10 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   onClick('#load-cancel', () => {
     hide('#file-dialog')
+  })
+
+  onClick('#audio-cancel', () => {
+    hide('#audio-dialog')
   })
 
   $$('.file').forEach((fileEl) => {

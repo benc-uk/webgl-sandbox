@@ -1,4 +1,4 @@
-const ctx = new AudioContext()
+let ctx
 let inputSource
 let analyser
 
@@ -11,9 +11,19 @@ export async function initAudio(deviceId, output = false, smoothing = 0.5, gain 
     return
   }
 
-  console.log('🔊 Requesting audio from device:', deviceId)
-  console.log('🔊 Smoothing:', smoothing)
-  console.log('🔊 Gain:', gain)
+  if (inputSource) {
+    inputSource.disconnect()
+  }
+
+  // Start or create the audio context
+  if (ctx && ctx.state === 'suspended') {
+    await ctx.resume()
+  } else {
+    ctx = new window.AudioContext()
+  }
+
+  console.log('🎙️ Requesting audio from device:', deviceId)
+  console.log(`Settings: output=${output}, smoothing=${smoothing}, gain=${gain}`)
 
   // Get the audio stream from the selected device
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -25,30 +35,27 @@ export async function initAudio(deviceId, output = false, smoothing = 0.5, gain 
     },
   })
 
-  console.log('🎙️ Got audio stream:', stream.id)
+  console.log('🔊 Got audio stream:', stream.id)
 
   // Create an audio source from the stream
-  try {
-    inputSource = ctx.createMediaStreamSource(stream)
 
-    const gainNode = ctx.createGain()
-    gainNode.gain.value = gain
+  inputSource = ctx.createMediaStreamSource(stream)
 
-    // Create an analyser node
-    analyser = ctx.createAnalyser()
-    analyser.fftSize = FFT_SIZE
-    analyser.smoothingTimeConstant = smoothing
+  const gainNode = ctx.createGain()
+  gainNode.gain.value = gain
 
-    // Connect the source to the analyser
-    inputSource.connect(gainNode)
-    gainNode.connect(analyser)
+  // Create an analyser node
+  analyser = ctx.createAnalyser()
+  analyser.fftSize = FFT_SIZE
+  analyser.smoothingTimeConstant = smoothing
 
-    if (output) {
-      // Connect the analyser to the output
-      analyser.connect(ctx.destination)
-    }
-  } catch (e) {
-    console.error('Error creating audio source:', e)
+  // Connect the source to the analyser
+  inputSource.connect(gainNode)
+  gainNode.connect(analyser)
+
+  if (output) {
+    // Connect the analyser to the output
+    analyser.connect(ctx.destination)
   }
 }
 

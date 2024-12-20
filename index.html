@@ -36,20 +36,22 @@
       <input type="checkbox" id="audio-output" checked><br>
 
       <label class="fw-label" for="audio-smoothing">Analyser smoothing</label>
-      <input type="range" id="audio-smoothing" min="0" max="1" step="0.05" value="0.5">
+      <input type="range" id="audio-smoothing" min="0" max="0.99" step="0.05" value="0.5">
 
       <label class="fw-label" for="audio-gain">Input gain</label>
-      <input type="range" id="audio-gain" min="0" max="1" step="0.05" value="1.0">
+      <input type="range" id="audio-gain" min="0" max="10.0" step="0.05" value="1.0">
 
       <h4 class="mt-2">🎚️ Open audio input device</h4>
       <select name="audio-devices" id="audio-devices">
         <option value="none">--- Select Device ---</option>
       </select>
 
+      <button id="audio-in-open">&nbsp; OPEN &nbsp;</button>
+
       <h4 class="mt-2">📂 Use audio file</h4>
       <hr>
       <div class="flex center">
-        <button id="audio-ok">&nbsp; OK &nbsp;</button>
+
         <button id="audio-cancel">CANCEL</button>
       </div>
     </div>
