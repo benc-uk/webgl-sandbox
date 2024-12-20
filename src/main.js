@@ -16,8 +16,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   getShaderText() // Load the shader text from local storage
   hideError()
 
-  show('#audio-dialog')
-
   const devices = await listInputDevices()
   if (devices === null) {
     $('#audio-devices').disabled = true
