@@ -28,6 +28,6 @@ vec3 hsv2rgb(float h, float s, float v)
   return v * mix(vec3(t.x), clamp(p - vec3(t.x), 0.0, 1.0), s);
 }
 
-float getAnalyser(int index) {
-  return float(u_analyser[index]) / 255.0;
+float audioFreqData(int binIndex) {
+  return float(u_analyser[binIndex]) / 255.0;
 }

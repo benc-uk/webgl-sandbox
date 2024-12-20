@@ -4,7 +4,7 @@ void main() {
   vec2 sp = gl_FragCoord.xy / u_resolution.xy;
   sp.x = floor(sp.x * 45.0) / 45.0;
   
-  float val = getAnalyser(int(sp.x * 512.0));
+  float val = audioFreqData(int(sp.x * 512.0));
   float line = 1.0 - step(val, sp.y);
 
   float t = clamp(sp.y, 0.0, 1.0) * 3.0;

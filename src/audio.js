@@ -22,8 +22,8 @@ export async function initAudio(deviceId, output = false, smoothing = 0.5, gain 
     ctx = new window.AudioContext()
   }
 
-  console.log('🎙️ Requesting audio from device:', deviceId)
-  console.log(`Settings: output=${output}, smoothing=${smoothing}, gain=${gain}`)
+  console.log('🎙️ Requesting audio device:', deviceId)
+  console.log(`🎛️ Settings: output=${output}, smoothing=${smoothing}, gain=${gain}`)
 
   // Get the audio stream from the selected device
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -35,10 +35,9 @@ export async function initAudio(deviceId, output = false, smoothing = 0.5, gain 
     },
   })
 
-  console.log('🔊 Got audio stream:', stream.id)
+  console.log('🔊 Got media stream:', stream.id)
 
-  // Create an audio source from the stream
-
+  // Create an audio source from the device media stream
   inputSource = ctx.createMediaStreamSource(stream)
 
   const gainNode = ctx.createGain()
