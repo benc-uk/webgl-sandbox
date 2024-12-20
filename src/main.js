@@ -3,7 +3,7 @@ import '../lib/fontawesome/css/solid.css'
 import '../lib/fontawesome/css/fontawesome.css'
 
 import { getGl, resize } from '../lib/gl.js'
-import { $, $$, onClick, hide, show, onKeyDownWithCode, onFullscreenChange, onChange } from '../lib/dom.js'
+import { $, $$, onClick, hide, show, onKeyDownWithCode, onFullscreenChange } from '../lib/dom.js'
 import { pause, runPressed, stop, hideError, showError } from './app.js'
 import { initEditor, selector, editor, resizeEditor } from './editor.js'
 import { getShaderText, loadSample } from './storage.js'
