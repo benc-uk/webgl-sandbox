@@ -52,7 +52,7 @@ export function initEditor(doneCallback) {
 
 // Resize the editor to fit properly under the canvas
 export function resizeEditor() {
-  console.log('📐 Resizing editor')
+  //console.log('📐 Resizing editor')
 
   const width = window.innerWidth - 0
   const height = window.innerHeight - $(selector).height - 80

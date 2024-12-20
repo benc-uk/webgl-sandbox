@@ -14,18 +14,44 @@
 </head>
 
 <body>
-  <div id="canvas-wrap">
+  <div id="output-wrap">
     <canvas id="output" tabindex='1' width="1920" height="1080"></canvas>
 
-    <div id="file-sel">
-      <div>&nbsp;Load example:</div>
+    <div id="file-dialog" class="dialog">
+      <h3>Load example shader</h3>
       <ul>
         <li class="file" data-file="blank">Blank</li>
         <li class="file" data-file="circles">Circles</li>
         <li class="file" data-file="colours">Colours</li>
         <li class="file" data-file="raytracer">Raytracer</li>
+        <li class="file" data-file="analyser">Spectrum Analyser</li>
       </ul>
       <div class="flex center"><button id="load-cancel">CANCEL</button></div>
+    </div>
+
+    <div id="audio-dialog" class="dialog">
+      <h3>Audio Settings</h3>
+      <hr>
+      <label class="fw-label" for="audio-output">Enable output</label>
+      <input type="checkbox" id="audio-output" checked><br>
+
+      <label class="fw-label" for="audio-smoothing">Analyser smoothing</label>
+      <input type="range" id="audio-smoothing" min="0" max="1" step="0.05" value="0.5">
+
+      <label class="fw-label" for="audio-gain">Input gain</label>
+      <input type="range" id="audio-gain" min="0" max="1" step="0.05" value="1.0">
+
+      <h4 class="mt-2">🎚️ Open audio input device</h4>
+      <select name="audio-devices" id="audio-devices">
+        <option value="none">--- Select Device ---</option>
+      </select>
+
+      <h4 class="mt-2">📂 Use audio file</h4>
+      <hr>
+      <div class="flex center">
+        <button id="audio-ok">&nbsp; OK &nbsp;</button>
+        <button id="audio-cancel">CANCEL</button>
+      </div>
     </div>
   </div>
 
@@ -37,7 +63,7 @@
     <button id="pause"><i class="fa-fw fa-solid fa-pause"></i></button>
     <button id="load"><i class="fa-fw fa-solid fa-folder"></i></button>
     <button id="fullscreen"><i class="fa-fw fa-solid fa-camera"></i></button>
-    <button id="temp"><i class="fa-fw fa-solid fa-poo"></i></button>
+    <button id="audio"><i class="fa-fw fa-solid fa-music"></i></button>
     <div class="note">Ben Coleman, 2024 <a href="https://github.com/benc-uk/gpu-playground" target="_blank">[GitHub]</a>
     </div>
   </div>

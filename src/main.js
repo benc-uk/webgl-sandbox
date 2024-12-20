@@ -3,16 +3,54 @@ import '../lib/fontawesome/css/solid.css'
 import '../lib/fontawesome/css/fontawesome.css'
 
 import { getGl, resize } from '../lib/gl.js'
-import { $, $$, onClick, hide, show, onKeyDownWithCode, onFullscreenChange } from '../lib/dom.js'
+import { $, $$, onClick, hide, show, onKeyDownWithCode, onFullscreenChange, onChange } from '../lib/dom.js'
 import { pause, runPressed, stop, hideError, showError } from './app.js'
 import { initEditor, selector, editor, resizeEditor } from './editor.js'
-import { loadSample } from './storage.js'
+import { getShaderText, loadSample } from './storage.js'
+import { initAudio, listInputDevices } from './audio.js'
 
 // Entry point for the whole app
 window.addEventListener('DOMContentLoaded', async () => {
   console.log('🚦 Initialising...')
   getGl(selector) // We call this early to make sure we have a GL context, but we don't need it yet
+  getShaderText() // Load the shader text from local storage
   hideError()
+
+  show('#audio-dialog')
+
+  const devices = await listInputDevices()
+  if (devices === null) {
+    $('#audio-devices').disabled = true
+    $('#audio-devices').innerHTML = '<option>Input audio access denied</option>'
+  } else {
+    for (const device of devices) {
+      const option = document.createElement('option')
+      option.text = device.label
+      option.value = device.deviceId
+      $('#audio-devices').add(option)
+    }
+
+    onChange('#audio-devices', async () => {
+      const deviceId = $('#audio-devices').value
+      const smoothing = parseFloat($('#audio-smoothing').value)
+      const gain = parseFloat($('#audio-gain').value)
+      const output = $('#audio-output').checked
+
+      await initAudio(deviceId, output, smoothing, gain)
+      hide('#audio-dialog')
+    })
+  }
+
+  onClick('#run', runPressed)
+
+  onClick('#stop', stop)
+
+  onClick('#pause', pause)
+
+  onClick('#load', () => {
+    hideError()
+    show('#file-dialog')
+  })
 
   onClick('#fullscreen', () => {
     $('#output').requestFullscreen()
@@ -32,20 +70,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     resizeEditor()
   })
 
+  new MutationObserver(() => {
+    resize()
+    resizeEditor()
+  }).observe($('#output-wrap'), { attributes: true })
+
   onClick('#load-cancel', () => {
-    hide('#file-sel')
+    hide('#file-dialog')
   })
-
-  onClick('#load', () => {
-    hideError()
-    show('#file-sel')
-  })
-
-  onClick('#stop', stop)
-
-  onClick('#pause', pause)
-
-  onClick('#run', runPressed)
 
   $$('.file').forEach((fileEl) => {
     // A file loader, fetches file from the public/samples folder
@@ -53,10 +85,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       try {
         const shaderText = await loadSample(fileEl.dataset.file)
         editor.setValue(shaderText)
-        hide('#file-sel')
-        $('#run').click()
+        hide('#file-dialog')
+        //$('#run').click()
+        runPressed()
       } catch (err) {
-        hide('#file-sel')
+        hide('#file-dialog')
         showError(err.message)
       }
     })
@@ -67,54 +100,5 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Initialise the Monaco text editor, and then run the shader when it's ready
   initEditor(runPressed)
 
-  // setTimeout(() => {
-  //   runPressed()
-  // }, 200)
-
-  // TEMP CODE HERE
-  // const ctx = new AudioContext()
-  // let wavSource
-  // let audioData
-
-  // // let started = false
-  // fetch('sample.wav')
-  //   .then((response) => response.arrayBuffer())
-  //   .then((arrayBuffer) => ctx.decodeAudioData(arrayBuffer))
-  //   .then((decodedAudio) => {
-  //     audioData = decodedAudio
-  //   })
-
-  // $('#temp').addEventListener('click', () => {
-  //   if (wavSource) {
-  //     wavSource.stop()
-  //     wavSource = null
-  //     return
-  //   }
-
-  //   wavSource = ctx.createBufferSource()
-  //   wavSource.buffer = audioData
-
-  //   const gainNode = ctx.createGain()
-  //   gainNode.gain.value = 0.5
-
-  //   const analyserNode = ctx.createAnalyser()
-  //   analyserNode.fftSize = 128
-
-  //   const bufferLength = analyserNode.frequencyBinCount
-  //   const dataArray = new Uint8Array(bufferLength)
-  //   analyserNode.getByteTimeDomainData(dataArray)
-
-  //   console.log(bufferLength)
-
-  //   for (let i = 0; i < bufferLength; i++) {
-  //     const v = dataArray[i]
-  //     console.log(v)
-  //   }
-
-  //   wavSource.connect(gainNode)
-  //   gainNode.connect(analyserNode)
-  //   analyserNode.connect(ctx.destination)
-
-  //   wavSource.start()
-  // })
+  initAudio()
 })

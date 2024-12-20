@@ -19,7 +19,7 @@ float sphereHit(vec3 ro, vec3 rd, Sphere sph) {
 }
 
 // Some global variables
-vec3 lightPos = vec3(11.0, 8.0, 10.0);
+vec3 lightPos = vec3(14.0, 8.0, 17.0);
 vec3 bgColor = vec3(0.6, 0.9, 0.9);
 float ambient = 0.06;
 
@@ -30,9 +30,9 @@ void main() {
   int hitIndex = -1; // Negative means no hit
 
   // Unable to move this outside of main() for weird GLSL reasons
-  scene[0] = Sphere(vec3(0.0, 0.0, 0.0), 2.6, vec3(0.3, 0.3, 1.0), 30.0);
-  scene[1] = Sphere(vec3(0.0, 1.0, 0.0), 1.2, vec3(0.8, 0.25, 0.2), 100.0);
-  scene[2] = Sphere(vec3(0.0, -1.0, 0.0), 0.6, vec3(0.1, 0.7, 0.1), 6.0);
+  scene[0] = Sphere(vec3(0.0, 0.0, 0.0), 5.2, vec3(0.3, 0.3, 1.0), 30.0);
+  scene[1] = Sphere(vec3(0.0, 1.0, 0.0), 2.0, vec3(0.8, 0.25, 0.2), 100.0);
+  scene[2] = Sphere(vec3(0.0, -1.0, 0.0), 1.2, vec3(0.1, 0.7, 0.1), 6.0);
 
   vec2 screenPos = gl_FragCoord.xy / u_resolution.xy;
   // Fix aspect ratio
@@ -40,15 +40,15 @@ void main() {
 
   // Rotate spheres around center each frame
   scene[0].position.y = 1.5 * sin(u_time*2.0);
-  scene[1].position.x = 5.0 * cos(u_time*0.8);
-  scene[1].position.z = 5.0 * sin(u_time*0.8);
-  scene[2].position.x = 3.8 * cos(-u_time*0.7);
-  scene[2].position.z = 3.8 * sin(-u_time*0.7);
+  scene[1].position.x = 12.5 * cos(u_time*0.8);
+  scene[1].position.z = 12.5 * sin(u_time*0.8);
+  scene[2].position.x = 7.5 * cos(-u_time*0.7);
+  scene[2].position.z = 7.5 * sin(-u_time*0.7);
   scene[2].position.y = 0.5 * sin(-u_time*4.0);
 
   // Create a ray, with origin and direction
-  vec3 ro = vec3(0.0, 0.0, 10.0);
-  vec3 rd = normalize(vec3(screenPos - 0.5, -1.0));
+  vec3 ro = vec3(0.0, 0.0, 22.0); // Camera position
+  vec3 rd = normalize(vec3(screenPos - 0.5, -0.9));
   
   // Find closest hit distance and index of hit sphere
   float minT = 1e9;

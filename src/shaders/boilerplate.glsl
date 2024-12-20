@@ -5,6 +5,8 @@ precision highp float;
 uniform vec2 u_resolution;
 uniform float u_time;
 uniform float u_aspect;
+uniform int u_analyser[512];
+
 out vec4 fragColor;
 
 vec2 screenPos(bool centered) {
@@ -24,4 +26,8 @@ vec3 hsv2rgb(float h, float s, float v)
   vec4 t = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
   vec3 p = abs(fract(vec3(h) + t.xyz) * 6.0 - vec3(t.w));
   return v * mix(vec3(t.x), clamp(p - vec3(t.x), 0.0, 1.0), s);
+}
+
+float getAnalyser(int index) {
+  return float(u_analyser[index]) / 255.0;
 }

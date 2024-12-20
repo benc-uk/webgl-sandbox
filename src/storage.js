@@ -14,12 +14,13 @@ export async function loadSample(name) {
 }
 
 /**
+ * Get the shader text from local storage or memoized value
  * @returns {string}
  */
 export function getShaderText() {
   return localStorage.getItem('shaderText')
 }
 
-export function saveShaderText(shaderText) {
-  localStorage.setItem('shaderText', shaderText)
+export function saveShaderText(text) {
+  localStorage.setItem('shaderText', text)
 }
