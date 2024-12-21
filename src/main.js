@@ -4,7 +4,7 @@ import '../lib/fontawesome/css/fontawesome.css'
 
 import { getGl, resize } from '../lib/gl.js'
 import { $, $$, onClick, hide, show, onKeyDownWithCode, onFullscreenChange } from '../lib/dom.js'
-import { pause, runPressed, stop, hideError, showError } from './app.js'
+import { pauseOrResume, execPressed, rewind, hideError, showError } from './app.js'
 import { initEditor, selector, editor, resizeEditor } from './editor.js'
 import { getShaderText, loadSample } from './storage.js'
 import { initAudio, listInputDevices } from './audio.js'
@@ -39,11 +39,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
   }
 
-  onClick('#run', runPressed)
+  onClick('#exec', execPressed)
 
-  onClick('#stop', stop)
+  onClick('#pause', pauseOrResume)
 
-  onClick('#pause', pause)
+  onClick('#rewind', rewind)
 
   onClick('#load', () => {
     hideError()
@@ -93,8 +93,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         const shaderText = await loadSample(fileEl.dataset.file)
         editor.setValue(shaderText)
         hide('#file-dialog')
-        //$('#run').click()
-        runPressed()
+        rewind()
+        execPressed()
       } catch (err) {
         hide('#file-dialog')
         showError(err.message)
@@ -105,7 +105,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   onKeyDownWithCode('#output', 'Space', pause)
 
   // Initialise the Monaco text editor, and then run the shader when it's ready
-  initEditor(runPressed)
+  initEditor(execPressed)
 
   initAudio()
 })
