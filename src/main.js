@@ -128,8 +128,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     hide('#audio-dialog')
   })
 
+  // A file loader, fetches file from the public/samples folder
   $$('.file').forEach((fileEl) => {
-    // A file loader, fetches file from the public/samples folder
     fileEl.addEventListener('click', async () => {
       try {
         const shaderText = await loadSample(fileEl.dataset.file)
@@ -144,7 +144,33 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
   })
 
+  // Spacebar to pause or resume
   onKeyDownWithCode('#output', 'Space', pauseOrResume)
+
+  // Fullscreen mode when double clicking
+  $('#output').ondblclick = function () {
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      $('#output').requestFullscreen()
+    }
+  }
+
+  // Capture double tap on mobile
+  let lastTap = 0
+  window.ontouchend = function (event) {
+    const currentTime = new Date().getTime()
+    const tapLength = currentTime - lastTap
+    if (tapLength < 500 && tapLength > 0) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen()
+      } else {
+        $('#output').requestFullscreen()
+      }
+      event.preventDefault()
+    }
+    lastTap = currentTime
+  }
 
   // Initialise the Monaco text editor, and then run the shader when it's ready
   initEditor(execPressed)

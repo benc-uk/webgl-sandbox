@@ -21,11 +21,13 @@
       <h3>Load example shader</h3>
       <ul>
         <li class="file" data-file="blank">Blank</li>
-        <li class="file" data-file="circles">Circles</li>
-        <li class="file" data-file="circles-analyser">Circles (Analyser)</li>
+        <li class="file" data-file="circles">Hypno Circles</li>
+
         <li class="file" data-file="colours">Colours</li>
         <li class="file" data-file="raytracer">Raytracer</li>
+        <div class="file-sect">Audio shaders:</div>
         <li class="file" data-file="analyser">Spectrum Analyser</li>
+        <li class="file" data-file="circles-analyser">Hypno Circles (Audio)</li>
       </ul>
       <div class="flex center"><button id="load-cancel" class="btn-small">CANCEL</button></div>
     </div>
@@ -61,15 +63,17 @@
   <div id="error"></div>
 
   <div id="toolbar" class="flex">
-    <button id="exec"><i class="fa-fw fa-solid fa-flag-checkered"></i></button>
-    <button id="pause"><i class="fa-fw fa-solid fa-pause"></i></button>
-    <button id="rewind"><i class="fa-fw  fa-solid fa-backward-step"></i></button>
+    <button id="exec" title="Execute and run code"><i class="fa-fw fa-solid fa-flag-checkered"></i></button>
+    <button id="pause" title="Pause/Run"><i class="fa-fw fa-solid fa-pause"></i></button>
+    <button id="rewind" title="Rewind time to start"><i class="fa-fw  fa-solid fa-backward-step"></i></button>
     &nbsp;&nbsp;
-    <button id="load"><i class="fa-fw fa-solid fa-folder"></i></button>
-    <button id="audio"><i class="fa-fw fa-solid fa-music"></i></button>
+    <button id="load" title="Load example file"><i class="fa-fw fa-solid fa-folder"></i></button>
+    <button id="audio" title="Configure audio"><i class="fa-solid fa-volume-high"></i></i></button>
+    <button id="midi" title="Configure MIDI" onclick="alert('MIDI Not implemented')"><i
+        class="fa-fw fa-solid fa-music"></i></button>
     &nbsp;&nbsp;
-    <button id="fullscreen"><i class="fa-fw fa-solid fa-camera"></i></button>
-    <button id="toggle"><i class="fa-fw fa-solid fa-code"></i></button>
+    <button id="fullscreen" title="Go fullscreen"><i class="fa-fw fa-solid fa-camera"></i></button>
+    <button id="toggle" title="Toggle editor visible"><i class="fa-fw fa-solid fa-code"></i></button>
 
     <div id="status"></div>
 

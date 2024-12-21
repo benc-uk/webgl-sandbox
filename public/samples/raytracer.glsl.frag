@@ -1,4 +1,4 @@
-// Realtime raytracer shader, how cool is this!
+// Realtime raytracer, how cool is this!
 
 // Sphere data structure
 struct Sphere {

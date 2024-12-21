@@ -41,7 +41,7 @@ export function initEditor(doneCallback) {
 
     // Trap Ctrl+S to run the shader and prevent the browser from saving the file
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      $('#run').click()
+      $('#exec').click()
     })
 
     editor.onDidChangeModelContent(() => {

@@ -2,21 +2,19 @@
 
 precision highp float;
 
-uniform vec2 u_resolution;
+uniform vec2 u_resolution;  
 uniform float u_time;
 uniform float u_aspect;
 uniform int u_analyser[512];
 
 out vec4 fragColor;
 
-vec2 screenPos(bool centered) {
+vec2 screenPos(float offset) {
   vec2 screenPos = gl_FragCoord.xy / u_resolution.xy;
   screenPos.x = (screenPos.x * u_aspect) - ((u_aspect - 1.0) / 2.0);
 
-  if (centered) {
-    screenPos.x -= 0.5;
-    screenPos.y -= 0.5;
-  }
+  screenPos.y += offset;
+  screenPos.x += offset;
 
   return screenPos;
 }

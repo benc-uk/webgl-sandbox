@@ -1,4 +1,4 @@
-// Spectrum analyser
+// Spectrum analyser and audio visualizer
 
 void main() {
   vec2 sp = gl_FragCoord.xy / u_resolution.xy;

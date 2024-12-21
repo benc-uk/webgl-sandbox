@@ -103,9 +103,11 @@ select {
 }
 
 #toolbar {
-  display: flex;
-  align-items: center;
   padding: 5px;
+  align-items: center;
+}
+#toolbar button {
+  width: 45px;
 }
 
 #error {
@@ -164,8 +166,20 @@ li {
 li:before {
   font-family: 'Font Awesome 6 Free';
   font-weight: 900;
-  content: '\f15b';
+  content: '\f1c9';
   padding: 0px 5px;
+}
+
+.file-sect {
+  padding: 4px 15px;
+  background-color: var(--secondary);
+}
+
+.file-sect::before {
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  content: '\f07c';
+  padding: 0px 8px;
 }
 
 li:hover {

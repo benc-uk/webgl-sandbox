@@ -1,3 +1,5 @@
+// Hypno circles that react to audio analyser
+
 void main() {
   float radius = 0.5;
   float width = 1.3 * audioFreqData(102) * 5.0;
@@ -5,7 +7,7 @@ void main() {
 
   vec4 color = vec4(0.7, 1.0-abs(sin(u_time * 0.5)), abs(sin(u_time * 0.8)), 1.0);
 
-  float dist1 = length(screenPos(true));
+  float dist1 = length(screenPos(-0.5));
   dist1 = fract((dist1 * 12.0) - u_time * audioFreqData(200) * 1.0);
   float dist2 = dist1 - radius;
   float intensity = pow(radius / abs(dist2), width); 
