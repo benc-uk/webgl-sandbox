@@ -1,6 +1,6 @@
 import { getGl, resize } from '../lib/gl.js'
 import { show, hide, setText, $, setHtml } from '../lib/dom.js'
-import { selector, resizeEditor } from './editor.js'
+import { selector, resizeEditor, addErrorLine, clearErrors } from './editor.js'
 
 import * as twgl from 'twgl.js'
 
@@ -44,6 +44,8 @@ function execShader(shaderCode) {
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.BLEND)
 
+  clearErrors()
+
   // Add extra & boilerplate code to the fragment shader
   shaderCode = boilerPlate + shaderCode
 
@@ -58,6 +60,8 @@ function execShader(shaderCode) {
         const message = line.match(/ERROR: \d+:\d+:(.*)$/)[1]
 
         niceErr += `Line:${lineNum - boilerplateLines} ${message}\n`
+
+        addErrorLine(lineNum - boilerplateLines, message)
       }
     }
 

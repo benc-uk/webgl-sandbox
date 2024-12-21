@@ -14,50 +14,50 @@
 </head>
 
 <body>
+  <dialog id="file-dialog">
+    <h3>Load example shader</h3>
+    <ul>
+      <li class="file" data-file="blank">Blank</li>
+      <li class="file" data-file="circles">Hypno Circles</li>
+
+      <li class="file" data-file="colours">Colours</li>
+      <li class="file" data-file="raytracer">Raytracer</li>
+      <div class="file-sect">Audio shaders:</div>
+      <li class="file" data-file="analyser">Spectrum Analyser</li>
+      <li class="file" data-file="circles-analyser">Hypno Circles (Audio)</li>
+    </ul>
+    <div class="flex center"><button id="load-cancel" class="btn-small">CANCEL</button></div>
+  </dialog>
+
+  <dialog id="audio-dialog">
+    <h3>Audio Settings</h3>
+    <hr>
+    <label class="fw-label" for="audio-output">Enable output</label>
+    <input type="checkbox" id="audio-output" checked><br>
+
+    <label class="fw-label" for="audio-smoothing">Analyser smoothing</label>
+    <input type="range" id="audio-smoothing" min="0" max="0.99" step="0.05" value="0.5"><br>
+
+    <label class="fw-label" for="audio-gain">Input gain</label>
+    <input type="range" id="audio-gain" min="0" max="10.0" step="0.05" value="1.0">
+
+    <h4 class="mt-2">🎚️ Use audio input / mic</h4>
+    <select name="audio-devices" id="audio-devices">
+      <option value="none">--- Select Device ---</option>
+    </select>
+
+    <button id="audio-in-open" class="btn-small" disabled>OPEN</button>
+    <button id="audio-in-close" class="btn-small" disabled>CLOSE</button>
+
+    <!-- <h4 class="mt-2">📂 Use audio file</h4> -->
+    <hr>
+    <div class="flex center">
+      <button id="audio-cancel" class="btn-small">CANCEL</button>
+    </div>
+  </dialog>
+
   <div id="output-wrap">
     <canvas id="output" tabindex='1' width="1920" height="1080"></canvas>
-
-    <div id="file-dialog" class="dialog">
-      <h3>Load example shader</h3>
-      <ul>
-        <li class="file" data-file="blank">Blank</li>
-        <li class="file" data-file="circles">Hypno Circles</li>
-
-        <li class="file" data-file="colours">Colours</li>
-        <li class="file" data-file="raytracer">Raytracer</li>
-        <div class="file-sect">Audio shaders:</div>
-        <li class="file" data-file="analyser">Spectrum Analyser</li>
-        <li class="file" data-file="circles-analyser">Hypno Circles (Audio)</li>
-      </ul>
-      <div class="flex center"><button id="load-cancel" class="btn-small">CANCEL</button></div>
-    </div>
-
-    <div id="audio-dialog" class="dialog">
-      <h3>Audio Settings</h3>
-      <hr>
-      <label class="fw-label" for="audio-output">Enable output</label>
-      <input type="checkbox" id="audio-output" checked><br>
-
-      <label class="fw-label" for="audio-smoothing">Analyser smoothing</label>
-      <input type="range" id="audio-smoothing" min="0" max="0.99" step="0.05" value="0.5">
-
-      <label class="fw-label" for="audio-gain">Input gain</label>
-      <input type="range" id="audio-gain" min="0" max="10.0" step="0.05" value="1.0">
-
-      <h4 class="mt-2">🎚️ Use audio input / mic</h4>
-      <select name="audio-devices" id="audio-devices">
-        <option value="none">--- Select Device ---</option>
-      </select>
-
-      <button id="audio-in-open" class="btn-small" disabled>OPEN</button>
-      <button id="audio-in-close" class="btn-small" disabled>CLOSE</button>
-
-      <!-- <h4 class="mt-2">📂 Use audio file</h4> -->
-      <hr>
-      <div class="flex center">
-        <button id="audio-cancel" class="btn-small">CANCEL</button>
-      </div>
-    </div>
   </div>
 
   <div id="error"></div>
@@ -69,8 +69,7 @@
     &nbsp;&nbsp;
     <button id="load" title="Load example file"><i class="fa-fw fa-solid fa-folder"></i></button>
     <button id="audio" title="Configure audio"><i class="fa-solid fa-volume-high"></i></i></button>
-    <button id="midi" title="Configure MIDI" onclick="alert('MIDI Not implemented')"><i
-        class="fa-fw fa-solid fa-music"></i></button>
+    <button id="midi" title="Configure MIDI"><i class="fa-fw fa-solid fa-music"></i></button>
     &nbsp;&nbsp;
     <button id="fullscreen" title="Go fullscreen"><i class="fa-fw fa-solid fa-camera"></i></button>
     <button id="toggle" title="Toggle editor visible"><i class="fa-fw fa-solid fa-code"></i></button>

@@ -3,6 +3,7 @@ import { getShaderText, saveShaderText, loadSample } from './storage.js'
 
 export let editor
 export const selector = '#output'
+let decorations
 
 export function initEditor(doneCallback) {
   if (editor) return
@@ -35,6 +36,7 @@ export function initEditor(doneCallback) {
       minimap: { enabled: false },
       automaticLayout: true,
       scrollBeyondLastLine: false,
+      glyphMargin: true,
     })
 
     editor.focus()
@@ -47,7 +49,29 @@ export function initEditor(doneCallback) {
     editor.onDidChangeModelContent(() => {
       saveShaderText(editor.getValue())
     })
+
+    decorations = editor.createDecorationsCollection()
   })
+}
+
+export function addErrorLine(lineNum, msg) {
+  decorations.append([
+    {
+      range: new monaco.Range(lineNum, 1, lineNum, 1),
+      options: {
+        isWholeLine: true,
+        className: 'editor-error',
+        marginClassName: 'editor-error',
+        glyphMarginClassName: 'glyph-error',
+        glyphMarginHoverMessage: { value: msg },
+        hoverMessage: { value: msg },
+      },
+    },
+  ])
+}
+
+export function clearErrors() {
+  decorations.clear()
 }
 
 // Resize the editor to fit properly under the canvas

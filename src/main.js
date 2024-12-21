@@ -3,17 +3,28 @@ import '../lib/fontawesome/css/solid.css'
 import '../lib/fontawesome/css/fontawesome.css'
 
 import { getGl, resize } from '../lib/gl.js'
-import { $, $$, onClick, hide, show, onKeyDownWithCode, onFullscreenChange, onChange, disable, enable, floatValue } from '../lib/dom.js'
+import {
+  $,
+  $$,
+  onClick,
+  onKeyDownWithCode,
+  onFullscreenChange,
+  onChange,
+  disable,
+  enable,
+  floatValue,
+  showDialog,
+  closeDialog,
+} from '../lib/dom.js'
 import { pauseOrResume, execPressed, rewind, hideError, showError } from './app.js'
 import { initEditor, selector, editor, resizeEditor } from './editor.js'
-import { getShaderText, loadSample } from './storage.js'
+import { loadSample } from './storage.js'
 import { getActiveAudioDevice, initInputAudio, listInputDevices, stopInputAudio } from './audio.js'
 
 // Entry point for the whole app
 window.addEventListener('DOMContentLoaded', async () => {
   console.log('🚦 Initialising...')
   getGl(selector) // We call this early to make sure we have a GL context, but we don't need it yet
-  getShaderText() // Load the shader text from local storage
   hideError()
 
   $('#version').innerText = `v${import.meta.env.PACKAGE_VERSION}`
@@ -26,8 +37,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   onClick('#load', () => {
     hideError()
-    hide('#audio-dialog')
-    show('#file-dialog')
+    showDialog('#file-dialog')
   })
 
   onClick('#fullscreen', () => {
@@ -40,7 +50,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   onClick('#audio', async () => {
     hideError()
-    hide('#file-dialog')
 
     const devices = await listInputDevices()
     if (devices === null) {
@@ -50,8 +59,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       $('#audio-devices').innerHTML = '<option value="none">--- Select Device ---</option>'
       const activeDevice = getActiveAudioDevice()
 
-      if (!activeDevice) {
-        disable('#audio-in-close')
+      if (activeDevice) {
+        enable('#audio-in-close')
       }
 
       for (const device of devices) {
@@ -61,6 +70,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
         if (activeDevice && activeDevice.deviceId === device.deviceId) {
           option.selected = true
+          disable('#audio-in-open')
         }
 
         $('#audio-devices').add(option)
@@ -74,21 +84,26 @@ window.addEventListener('DOMContentLoaded', async () => {
         const output = $('#audio-output').checked
 
         await initInputAudio(device, output, smoothing, gain)
-        enable('#audio-in-close')
-        hide('#audio-dialog')
+        closeDialog('#audio-dialog')
       }
     }
 
-    show('#audio-dialog')
+    showDialog('#audio-dialog')
   })
 
-  onChange('#audio-devices', () => {
-    enable('#audio-in-open')
+  onChange('#audio-devices', (e) => {
+    if (e.target.selectedIndex === 0) {
+      disable('#audio-in-open')
+    } else {
+      enable('#audio-in-open')
+    }
   })
 
-  onClick('#audio-in-close', () => {
-    hide('#audio-dialog')
+  onClick('#audio-in-close', async () => {
     stopInputAudio()
+    closeDialog('#audio-dialog')
+    disable('#audio-in-close')
+    disable('#audio-in-open')
   })
 
   onClick('#toggle', () => {
@@ -121,11 +136,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   }).observe($('#output-wrap'), { attributes: true })
 
   onClick('#load-cancel', () => {
-    hide('#file-dialog')
+    closeDialog('#file-dialog')
   })
 
   onClick('#audio-cancel', () => {
-    hide('#audio-dialog')
+    closeDialog('#audio-dialog')
   })
 
   // A file loader, fetches file from the public/samples folder
@@ -134,11 +149,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       try {
         const shaderText = await loadSample(fileEl.dataset.file)
         editor.setValue(shaderText)
-        hide('#file-dialog')
+        closeDialog('#file-dialog')
         rewind()
         execPressed()
       } catch (err) {
-        hide('#file-dialog')
+        closeDialog('#file-dialog')
         showError(err.message)
       }
     })
