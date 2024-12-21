@@ -1,18 +1,29 @@
 let ctx
+
+/** @type {MediaStreamAudioSourceNode} */
 let inputSource
+
+/** @type {AnalyserNode} */
 let analyser
+
+/** @type {MediaDeviceInfo} */
+let activeDevice
 
 // Warning changing this value will require changing the shader boilerplate
 export const ANALYSER_BUFFER_SIZE = 512
 const FFT_SIZE = 1024
 
-export async function initAudio(deviceId, output = false, smoothing = 0.5, gain = 1.0) {
-  if (!deviceId) {
+/**
+ * Initialize the audio input
+ * @param {MediaDeviceInfo} device
+ * @param {boolean} output
+ * @param {number} smoothing
+ * @param {number} gain
+ * @returns
+ */
+export async function initInputAudio(device, output = false, smoothing = 0.5, gain = 1.0) {
+  if (!device) {
     return
-  }
-
-  if (inputSource) {
-    inputSource.disconnect()
   }
 
   // Start or create the audio context
@@ -22,20 +33,21 @@ export async function initAudio(deviceId, output = false, smoothing = 0.5, gain 
     ctx = new window.AudioContext()
   }
 
-  console.log('🎙️ Requesting audio device:', deviceId)
-  console.log(`🎛️ Settings: output=${output}, smoothing=${smoothing}, gain=${gain}`)
+  if (inputSource) {
+    analyser.disconnect()
+    inputSource.disconnect()
+    inputSource = null
+  }
 
-  // Get the audio stream from the selected device
+  /** @type {MediaStream} */
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: {
-      deviceId: { exact: deviceId },
+      deviceId: { exact: device.deviceId },
       echoCancellation: false,
       noiseSuppression: false,
       autoGainControl: false,
     },
   })
-
-  console.log('🔊 Got media stream:', stream.id)
 
   // Create an audio source from the device media stream
   inputSource = ctx.createMediaStreamSource(stream)
@@ -56,6 +68,19 @@ export async function initAudio(deviceId, output = false, smoothing = 0.5, gain 
     // Connect the analyser to the output
     analyser.connect(ctx.destination)
   }
+
+  activeDevice = device
+}
+
+export function stopInputAudio() {
+  analyser.disconnect()
+  inputSource.disconnect()
+  inputSource = null
+  activeDevice = null
+}
+
+export function getActiveAudioDevice() {
+  return activeDevice
 }
 
 export function getAnalyser() {

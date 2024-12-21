@@ -36,7 +36,6 @@ h6 {
 canvas {
   background-color: black;
   width: 100%;
-  /* max-height: 60vh; */
 }
 
 canvas:focus {
@@ -47,6 +46,12 @@ canvas:focus {
 @media (max-width: 1000px) {
   canvas {
     width: 100%;
+  }
+  #note {
+    display: none;
+  }
+  #status {
+    display: none;
   }
 }
 
@@ -69,6 +74,11 @@ button {
 
 button:hover {
   background-color: var(--tertiary);
+}
+
+button:disabled {
+  background-color: var(--secondary);
+  color: var(--lighter);
 }
 
 select {
@@ -130,6 +140,8 @@ select {
   backdrop-filter: blur(11.8px);
   -webkit-backdrop-filter: blur(11.8px);
   box-shadow: 0px 10px 17px rgba(0, 0, 0, 0.6);
+
+  z-index: 100;
 }
 
 ul {
@@ -171,10 +183,16 @@ li:hover {
   align-items: center;
 }
 
-.note {
+#note {
   font-size: 0.9rem;
   color: var(--tertiary);
   margin-left: auto;
+}
+
+#status {
+  font-size: 0.95rem;
+  color: var(--lighter);
+  margin-left: 1rem;
 }
 
 a {

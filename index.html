@@ -47,9 +47,10 @@
         <option value="none">--- Select Device ---</option>
       </select>
 
-      <button id="audio-in-open" class="btn-small">&nbsp; OPEN &nbsp;</button>
+      <button id="audio-in-open" class="btn-small" disabled>OPEN</button>
+      <button id="audio-in-close" class="btn-small" disabled>CLOSE</button>
 
-      <h4 class="mt-2">📂 Use audio file</h4>
+      <!-- <h4 class="mt-2">📂 Use audio file</h4> -->
       <hr>
       <div class="flex center">
         <button id="audio-cancel" class="btn-small">CANCEL</button>
@@ -63,10 +64,18 @@
     <button id="exec"><i class="fa-fw fa-solid fa-flag-checkered"></i></button>
     <button id="pause"><i class="fa-fw fa-solid fa-pause"></i></button>
     <button id="rewind"><i class="fa-fw  fa-solid fa-backward-step"></i></button>
+    &nbsp;&nbsp;
     <button id="load"><i class="fa-fw fa-solid fa-folder"></i></button>
-    <button id="fullscreen"><i class="fa-fw fa-solid fa-camera"></i></button>
     <button id="audio"><i class="fa-fw fa-solid fa-music"></i></button>
-    <div class="note">Ben Coleman, 2024 <a href="https://github.com/benc-uk/gpu-playground" target="_blank">[GitHub]</a>
+    &nbsp;&nbsp;
+    <button id="fullscreen"><i class="fa-fw fa-solid fa-camera"></i></button>
+    <button id="toggle"><i class="fa-fw fa-solid fa-code"></i></button>
+
+    <div id="status"></div>
+
+    <div id="note">
+      <span id="version"></span>
+      Ben Coleman, 2024 <a href="https://github.com/benc-uk/gpu-playground" target="_blank">[GitHub]</a>
     </div>
   </div>
 

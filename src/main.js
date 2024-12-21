@@ -3,11 +3,11 @@ import '../lib/fontawesome/css/solid.css'
 import '../lib/fontawesome/css/fontawesome.css'
 
 import { getGl, resize } from '../lib/gl.js'
-import { $, $$, onClick, hide, show, onKeyDownWithCode, onFullscreenChange } from '../lib/dom.js'
+import { $, $$, onClick, hide, show, onKeyDownWithCode, onFullscreenChange, onChange, disable, enable, floatValue } from '../lib/dom.js'
 import { pauseOrResume, execPressed, rewind, hideError, showError } from './app.js'
 import { initEditor, selector, editor, resizeEditor } from './editor.js'
 import { getShaderText, loadSample } from './storage.js'
-import { initAudio, listInputDevices } from './audio.js'
+import { getActiveAudioDevice, initInputAudio, listInputDevices, stopInputAudio } from './audio.js'
 
 // Entry point for the whole app
 window.addEventListener('DOMContentLoaded', async () => {
@@ -16,28 +16,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   getShaderText() // Load the shader text from local storage
   hideError()
 
-  const devices = await listInputDevices()
-  if (devices === null) {
-    $('#audio-devices').disabled = true
-    $('#audio-devices').innerHTML = '<option>Input audio access denied</option>'
-  } else {
-    for (const device of devices) {
-      const option = document.createElement('option')
-      option.text = device.label
-      option.value = device.deviceId
-      $('#audio-devices').add(option)
-    }
-
-    onClick('#audio-in-open', async () => {
-      const deviceId = $('#audio-devices').value
-      const smoothing = parseFloat($('#audio-smoothing').value)
-      const gain = parseFloat($('#audio-gain').value)
-      const output = $('#audio-output').checked
-
-      await initAudio(deviceId, output, smoothing, gain)
-      hide('#audio-dialog')
-    })
-  }
+  $('#version').innerText = `v${import.meta.env.PACKAGE_VERSION}`
 
   onClick('#exec', execPressed)
 
@@ -47,6 +26,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   onClick('#load', () => {
     hideError()
+    hide('#audio-dialog')
     show('#file-dialog')
   })
 
@@ -58,9 +38,71 @@ window.addEventListener('DOMContentLoaded', async () => {
     }, 200)
   })
 
-  onClick('#audio', () => {
+  onClick('#audio', async () => {
     hideError()
+    hide('#file-dialog')
+
+    const devices = await listInputDevices()
+    if (devices === null) {
+      disable('#audio-devices')
+      $('#audio-devices').innerHTML = '<option>Input audio access denied</option>'
+    } else {
+      $('#audio-devices').innerHTML = '<option value="none">--- Select Device ---</option>'
+      const activeDevice = getActiveAudioDevice()
+
+      if (!activeDevice) {
+        disable('#audio-in-close')
+      }
+
+      for (const device of devices) {
+        const option = document.createElement('option')
+        option.text = device.label
+        option.value = device.deviceId
+
+        if (activeDevice && activeDevice.deviceId === device.deviceId) {
+          option.selected = true
+        }
+
+        $('#audio-devices').add(option)
+      }
+
+      $('#audio-in-open').onclick = async () => {
+        const device = devices.find((d) => d.deviceId === $('#audio-devices').value)
+
+        const smoothing = floatValue('#audio-smoothing')
+        const gain = floatValue('#audio-gain')
+        const output = $('#audio-output').checked
+
+        await initInputAudio(device, output, smoothing, gain)
+        enable('#audio-in-close')
+        hide('#audio-dialog')
+      }
+    }
+
     show('#audio-dialog')
+  })
+
+  onChange('#audio-devices', () => {
+    enable('#audio-in-open')
+  })
+
+  onClick('#audio-in-close', () => {
+    hide('#audio-dialog')
+    stopInputAudio()
+  })
+
+  onClick('#toggle', () => {
+    const codeEl = $('#code')
+    if (codeEl.style.display === 'none') {
+      codeEl.style.display = 'block'
+      $('#output-wrap').style.height = `${window.innerHeight - window.innerHeight / 2.6}px`
+      resize()
+      resizeEditor()
+    } else {
+      codeEl.style.display = 'none'
+      $('#output-wrap').style.height = `${window.innerHeight - 60}px`
+      resize()
+    }
   })
 
   onFullscreenChange('#output', () => {
@@ -102,10 +144,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
   })
 
-  onKeyDownWithCode('#output', 'Space', pause)
+  onKeyDownWithCode('#output', 'Space', pauseOrResume)
 
   // Initialise the Monaco text editor, and then run the shader when it's ready
   initEditor(execPressed)
-
-  initAudio()
 })

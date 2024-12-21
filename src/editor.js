@@ -52,11 +52,19 @@ export function initEditor(doneCallback) {
 
 // Resize the editor to fit properly under the canvas
 export function resizeEditor() {
-  //console.log('📐 Resizing editor')
-
   const width = window.innerWidth - 0
   const height = window.innerHeight - $(selector).height - 80
 
   $('#code').style.height = `${height}px`
   $('#code').style.width = `${width}px`
+}
+
+export function toggleEditor() {
+  const codeEl = $('#code')
+  if (codeEl.style.display === 'none') {
+    codeEl.style.display = 'block'
+    resizeEditor()
+  } else {
+    codeEl.style.display = 'none'
+  }
 }

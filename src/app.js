@@ -1,5 +1,5 @@
 import { getGl, resize } from '../lib/gl.js'
-import { show, hide, setText, $ } from '../lib/dom.js'
+import { show, hide, setText, $, setHtml } from '../lib/dom.js'
 import { selector, resizeEditor } from './editor.js'
 
 import * as twgl from 'twgl.js'
@@ -7,7 +7,7 @@ import * as twgl from 'twgl.js'
 import vertShader from './shaders/base.glsl.vert?raw'
 import boilerPlate from './shaders/boilerplate.glsl?raw'
 import { getShaderText } from './storage.js'
-import { ANALYSER_BUFFER_SIZE, getAnalyser } from './audio.js'
+import { ANALYSER_BUFFER_SIZE, getActiveAudioDevice, getAnalyser } from './audio.js'
 
 let looping = false
 let paused = false
@@ -119,6 +119,11 @@ function execShader(shaderCode) {
     twgl.setUniforms(progInfo, uniforms)
     twgl.drawBufferInfo(gl, bufferInfo)
 
+    // Update status every 150ms
+    if (time % 150 < 30) {
+      updateStatus()
+    }
+
     // Loop and update the time
     lastTime = time
     requestAnimationFrame(render)
@@ -127,6 +132,7 @@ function execShader(shaderCode) {
   // It's all about this one line of code
   console.log('🚀 Starting render loop')
   looping = true
+  updateStatus()
   requestAnimationFrame(render)
 }
 
@@ -134,12 +140,14 @@ function execShader(shaderCode) {
 export function rewind() {
   elapsedTime = 0
   lastTime = performance.now()
+  updateStatus()
 }
 
 // Pause or resume the shader
 export function pauseOrResume() {
   $('#pause').innerHTML = paused ? '<i class="fa-fw fa-solid fa-pause"></i>' : '<i class="fa-fw fa-solid fa-play"></i>'
   paused = !paused
+  updateStatus()
 }
 
 // Hide the error message
@@ -154,4 +162,20 @@ export function hideError() {
 export function showError(errMessage = '') {
   setText('#error', errMessage)
   show('#error')
+  updateStatus()
+}
+
+export function updateStatus() {
+  let status = paused ? 'Paused' : 'Running'
+
+  let statusText = `${status}: ${elapsedTime.toFixed(2)}s`
+  if (!looping) {
+    statusText = 'Error!'
+  }
+
+  if (getActiveAudioDevice()) {
+    statusText += `<br>Audio: ${getActiveAudioDevice().label}`
+  }
+
+  setHtml('#status', statusText)
 }
