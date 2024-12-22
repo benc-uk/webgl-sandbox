@@ -7,7 +7,9 @@ import * as twgl from 'twgl.js'
 import vertShader from './shaders/base.glsl.vert?raw'
 import boilerPlate from './shaders/boilerplate.glsl?raw'
 import { getShaderText } from './storage.js'
-import { ANALYSER_BUFFER_SIZE, getActiveAudioDevice, getAnalyser } from './audio.js'
+import { ANALYSER_BUFFER_SIZE, getActiveDevice, getAnalyser } from './audio.js'
+import { getNotes, getCC } from './midi.js'
+import { createNoiseRand } from './noise.js'
 
 let looping = false
 let paused = false
@@ -40,7 +42,7 @@ export function execPressed() {
  * @param {string} shaderCode - The fragment shader code
  */
 function execShader(shaderCode) {
-  const gl = getGl(selector)
+  const gl = getGl(selector, false)
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.BLEND)
 
@@ -85,19 +87,28 @@ function execShader(shaderCode) {
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays)
   twgl.setBuffersAndAttributes(gl, progInfo, bufferInfo)
 
+  const { noiseTex, randomTex } = createNoiseRand(gl, twgl)
+
   /**
    * Inner function to render the shader
    * @param {number} time
    */
   function render(time) {
+    // Audio and frequency data
     let dataArray = new Uint8Array(ANALYSER_BUFFER_SIZE)
     const analyser = getAnalyser()
     if (analyser) {
       analyser.getByteFrequencyData(dataArray)
     }
 
+    // MIDI data
+    const notes = getNotes()
+    const cc = getCC()
+
+    let deltaTime = 0
     if (!paused) {
-      elapsedTime += (time - lastTime) / 1000
+      deltaTime = (time - lastTime) / 1000
+      elapsedTime += deltaTime
     }
 
     // When running is false, clear the screen and exit render loop
@@ -110,9 +121,14 @@ function execShader(shaderCode) {
     const canvas = gl.canvas
     const uniforms = {
       u_time: elapsedTime,
+      u_delta: deltaTime,
       u_resolution: [canvas.width, canvas.height],
       u_aspect: [canvas.clientWidth / canvas.clientHeight],
       u_analyser: dataArray,
+      u_midi_notes: notes,
+      u_midi_cc: cc,
+      u_rand_tex: randomTex,
+      u_noise_tex: noiseTex,
     }
 
     gl.viewport(0, 0, canvas.width, canvas.height)
@@ -177,8 +193,8 @@ export function updateStatus() {
     statusText = 'Error!'
   }
 
-  if (getActiveAudioDevice()) {
-    statusText += `<br>Audio: ${getActiveAudioDevice().label}`
+  if (getActiveDevice()) {
+    statusText += `<br>Audio: ${getActiveDevice().label}`
   }
 
   setHtml('#status', statusText)

@@ -19,6 +19,7 @@
     <ul>
       <li class="file" data-file="blank">Blank</li>
       <li class="file" data-file="circles">Hypno Circles</li>
+      <li class="file" data-file="scrap">Test</li>
 
       <li class="file" data-file="colours">Colours</li>
       <li class="file" data-file="raytracer">Raytracer</li>
@@ -56,8 +57,23 @@
     </div>
   </dialog>
 
+  <dialog id="midi-dialog">
+    <h3>MIDI Settings</h3>
+    <hr>
+    <select name="midi-devices" id="midi-devices">
+      <option value="none">--- Select Device ---</option>
+    </select>
+
+    <button id="midi-in-open" class="btn-small" disabled>OPEN</button>
+
+    <hr>
+    <div class="flex center">
+      <button id="midi-cancel" class="btn-small">CANCEL</button>
+    </div>
+  </dialog>
+
   <div id="output-wrap">
-    <canvas id="output" tabindex='1' width="1920" height="1080"></canvas>
+    <canvas id="output" tabindex='1' width="800" height="400"></canvas>
   </div>
 
   <div id="error"></div>

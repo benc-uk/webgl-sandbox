@@ -2,10 +2,15 @@
 
 precision highp float;
 
+const float PHI = 1.61803398874989484820459; // Φ = Golden Ratio 
+
 uniform vec2 u_resolution;  
 uniform float u_time;
+uniform float u_delta;
 uniform float u_aspect;
 uniform int u_analyser[512];
+uniform sampler2D u_rand_tex; // Texture holding random values 256x256
+uniform sampler2D u_noise_tex; // Texture holding simplex noise values 256x256
 
 out vec4 fragColor;
 
@@ -28,4 +33,20 @@ vec3 hsv2rgb(float h, float s, float v)
 
 float audioFreqData(int binIndex) {
   return float(u_analyser[binIndex]) / 255.0;
+}
+
+float goldNoise(in vec2 xy, in float seed)
+{
+  return fract(tan(distance(xy*PHI, xy)*seed)*xy.x);
+}
+
+float randGold(float o) {
+  float seed = u_time; 
+  return goldNoise(gl_FragCoord.xy, seed+o);
+}
+
+float randTex(float o) {
+  vec2 screenPos = gl_FragCoord.xy / u_resolution.xy;
+  float seed = fract(u_time+o);
+  return texture(u_rand_tex, screenPos+seed).r;
 }

@@ -21,7 +21,7 @@ const FFT_SIZE = 1024
  * @param {number} gain
  * @returns
  */
-export async function initInputAudio(device, output = false, smoothing = 0.5, gain = 1.0) {
+export async function initInput(device, output = false, smoothing = 0.5, gain = 1.0) {
   if (!device) {
     return
   }
@@ -72,14 +72,14 @@ export async function initInputAudio(device, output = false, smoothing = 0.5, ga
   activeDevice = device
 }
 
-export function stopInputAudio() {
+export function stopInput() {
   analyser.disconnect()
   inputSource.disconnect()
   inputSource = null
   activeDevice = null
 }
 
-export function getActiveAudioDevice() {
+export function getActiveDevice() {
   return activeDevice
 }
 

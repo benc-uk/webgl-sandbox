@@ -2,24 +2,15 @@ import '../css/style.css'
 import '../lib/fontawesome/css/solid.css'
 import '../lib/fontawesome/css/fontawesome.css'
 
+// prettier-ignore
+import { $, $$, onClick, onKeyDownCode, onFullscreenChange, onChange, 
+         disable, enable, floatValue, showDialog, closeDialog } from '../lib/dom.js'
 import { getGl, resize } from '../lib/gl.js'
-import {
-  $,
-  $$,
-  onClick,
-  onKeyDownWithCode,
-  onFullscreenChange,
-  onChange,
-  disable,
-  enable,
-  floatValue,
-  showDialog,
-  closeDialog,
-} from '../lib/dom.js'
 import { pauseOrResume, execPressed, rewind, hideError, showError } from './app.js'
 import { initEditor, selector, editor, resizeEditor } from './editor.js'
 import { loadSample } from './storage.js'
-import { getActiveAudioDevice, initInputAudio, listInputDevices, stopInputAudio } from './audio.js'
+import * as audio from './audio.js'
+import * as midi from './midi.js'
 
 // Entry point for the whole app
 window.addEventListener('DOMContentLoaded', async () => {
@@ -51,13 +42,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   onClick('#audio', async () => {
     hideError()
 
-    const devices = await listInputDevices()
+    const devices = await audio.listInputDevices()
     if (devices === null) {
       disable('#audio-devices')
       $('#audio-devices').innerHTML = '<option>Input audio access denied</option>'
     } else {
       $('#audio-devices').innerHTML = '<option value="none">--- Select Device ---</option>'
-      const activeDevice = getActiveAudioDevice()
+      const activeDevice = audio.getActiveDevice()
 
       if (activeDevice) {
         enable('#audio-in-close')
@@ -76,16 +67,16 @@ window.addEventListener('DOMContentLoaded', async () => {
         $('#audio-devices').add(option)
       }
 
-      $('#audio-in-open').onclick = async () => {
+      onClick('#audio-in-open', async () => {
         const device = devices.find((d) => d.deviceId === $('#audio-devices').value)
 
         const smoothing = floatValue('#audio-smoothing')
         const gain = floatValue('#audio-gain')
         const output = $('#audio-output').checked
 
-        await initInputAudio(device, output, smoothing, gain)
+        await audio.initInput(device, output, smoothing, gain)
         closeDialog('#audio-dialog')
-      }
+      })
     }
 
     showDialog('#audio-dialog')
@@ -100,7 +91,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   onClick('#audio-in-close', async () => {
-    stopInputAudio()
+    audio.stopInput()
     closeDialog('#audio-dialog')
     disable('#audio-in-close')
     disable('#audio-in-open')
@@ -160,7 +151,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // Spacebar to pause or resume
-  onKeyDownWithCode('#output', 'Space', pauseOrResume)
+  onKeyDownCode('#output', 'Space', pauseOrResume)
 
   // Fullscreen mode when double clicking
   $('#output').ondblclick = function () {
@@ -187,6 +178,66 @@ window.addEventListener('DOMContentLoaded', async () => {
     lastTap = currentTime
   }
 
+  onClick('#midi', async () => {
+    hideError()
+
+    const devices = await midi.listInputDevices()
+    if (devices === null) {
+      disable('#midi-devices')
+      $('#midi-devices').innerHTML = '<option>MIDI access denied</option>'
+    } else {
+      $('#audio-devices').innerHTML = '<option value="none">--- Select Device ---</option>'
+      const activeDeviceId = midi.getActiveDeviceId()
+
+      showDialog('#midi-dialog')
+
+      for (const device of devices) {
+        const option = document.createElement('option')
+        option.text = device.name
+        option.value = device.id
+
+        if (activeDeviceId && activeDeviceId === device.id) {
+          option.selected = true
+          disable('#midi-in-open')
+        }
+
+        $('#midi-devices').add(option)
+      }
+
+      onClick('#midi-in-open', async () => {
+        const deviceId = $('#midi-devices').value
+        await midi.initInput(deviceId)
+        closeDialog('#midi-dialog')
+      })
+    }
+  })
+
+  onChange('#midi-devices', (e) => {
+    if (e.target.selectedIndex === 0) {
+      disable('#midi-in-open')
+    } else {
+      enable('#midi-in-open')
+    }
+  })
+
+  onClick('#midi-cancel', () => {
+    closeDialog('#midi-dialog')
+  })
+
   // Initialise the Monaco text editor, and then run the shader when it's ready
   initEditor(execPressed)
+
+  // if URL fragment is present, load it as a sample
+  setTimeout(async () => {
+    if (window.location.hash) {
+      const sample = window.location.hash.substring(1)
+      console.log(`Loading sample: ${sample}`)
+
+      const shaderText = await loadSample(sample)
+      editor.setValue(shaderText)
+      closeDialog('#file-dialog')
+      rewind()
+      execPressed()
+    }
+  }, 200)
 })
