@@ -1,11 +1,25 @@
-import { $ } from '../lib/dom.js'
-import { getShaderText, saveShaderText, loadSample } from './storage.js'
+// ===============================================================================
+// Handles the code editor which is based on Monaco
+// ===============================================================================
 
-export let editor
+import { $ } from '../lib/dom.js'
+import { getShaderCode, loadExample, saveShaderCode } from './storage.js'
+
+// Used everywhere, selector for the GL canvas
 export const selector = '#output'
+
+// Global reference to the Monaco editor
+export let editor
+
+// Editor decorations for errors
 let decorations
 
-export function initEditor(doneCallback) {
+/**
+ * Initialize the Monaco editor
+ * @param {function} doneCallback - Callback to call when the editor is ready
+ * @param {string} forceFileLoad - Force load a specific example file
+ */
+export function initEditor(doneCallback, forceFileLoad) {
   if (editor) return
 
   // Crap needed for Monaco editor
@@ -24,13 +38,18 @@ export function initEditor(doneCallback) {
       monaco.editor.onDidCreateEditor(doneCallback)
     }
 
-    let shaderText = getShaderText()
-    if (shaderText === null) {
-      shaderText = await loadSample('raytracer')
+    let code
+    if (forceFileLoad) {
+      code = await loadExample(forceFileLoad)
+    } else {
+      code = getShaderCode()
+      if (code === null) {
+        code = await loadExample('raytracer')
+      }
     }
 
     editor = monaco.editor.create($('#code'), {
-      value: shaderText,
+      value: code,
       theme: 'vs-dark',
       language: 'glsl',
       minimap: { enabled: false },
@@ -47,13 +66,18 @@ export function initEditor(doneCallback) {
     })
 
     editor.onDidChangeModelContent(() => {
-      saveShaderText(editor.getValue())
+      saveShaderCode(editor.getValue())
     })
 
     decorations = editor.createDecorationsCollection()
   })
 }
 
+/**
+ * Add an error to the editor on a given line
+ * @param {number} lineNum - Line number to add the error to
+ * @param {*} msg - Error message to display
+ */
 export function addErrorLine(lineNum, msg) {
   decorations.append([
     {
@@ -70,6 +94,7 @@ export function addErrorLine(lineNum, msg) {
   ])
 }
 
+// Clear all errors from the editor
 export function clearErrors() {
   decorations.clear()
 }
@@ -77,12 +102,13 @@ export function clearErrors() {
 // Resize the editor to fit properly under the canvas
 export function resizeEditor() {
   const width = window.innerWidth - 0
-  const height = window.innerHeight - $(selector).height - 80
+  const height = window.innerHeight - $(selector).height - 80 // 80 is a magic number that works
 
   $('#code').style.height = `${height}px`
   $('#code').style.width = `${width}px`
 }
 
+// Toggle the editor on and off
 export function toggleEditor() {
   const codeEl = $('#code')
   if (codeEl.style.display === 'none') {

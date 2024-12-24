@@ -6,20 +6,10 @@
   --tertiary: rgb(75, 75, 75);
   --lighter: rgb(120, 120, 120);
   --primary: rgb(212, 212, 212);
-  --error: rgb(228, 67, 61);
+  --red: rgb(228, 67, 61);
+  --dark-red: rgb(92, 15, 15);
   --blue: rgb(64, 162, 217);
-}
-
-.editor-error {
-  background-color: rgba(255, 0, 0, 0.3);
-}
-
-.glyph-error {
-  padding-left: 10px;
-  font-size: 14px;
-  &::before {
-    content: '💀';
-  }
+  --light-blue: rgb(136, 201, 241);
 }
 
 body {
@@ -56,15 +46,16 @@ canvas:focus {
 }
 
 /* media query for smaller screens */
-@media (max-width: 1000px) {
-  canvas {
-    width: 100%;
-  }
+@media (max-width: 800px) {
   #note {
     display: none;
   }
-  #status {
+  .status {
     display: none;
+  }
+  buttton {
+    font-size: 16px !important;
+    width: 16px !important;
   }
 }
 
@@ -75,7 +66,7 @@ button {
   height: 45px;
   margin: 3px;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 8px;
   font-size: 20px;
   color: var(--blue);
 }
@@ -87,6 +78,7 @@ button {
 
 button:hover {
   background-color: var(--tertiary);
+  border-color: var(--lighter);
 }
 
 button:disabled {
@@ -144,16 +136,17 @@ dialog::backdrop {
 
 #error {
   position: absolute;
+  display: none;
   top: 10%;
   left: 50%;
   transform: translateX(-50%);
   width: 60%;
-  color: var(--error);
+  color: var(--red);
   padding: 9px;
   margin: 15px;
   font-size: 1.2rem;
   background-color: var(--nearblack);
-  border: 3px solid var(--error);
+  border: 3px solid var(--red);
   border-radius: 5px;
   font-family: Consolas, 'Courier New', Courier, monospace;
   box-shadow: 0px 10px 17px rgba(0, 0, 0, 0.6);
@@ -214,12 +207,13 @@ li:hover {
   font-size: 0.9rem;
   color: var(--tertiary);
   margin-left: auto;
+  text-align: right;
 }
 
-#status {
+.status {
   font-size: 0.95rem;
   color: var(--lighter);
-  margin-left: 1rem;
+  margin-left: 0.5rem;
 }
 
 a {
@@ -246,4 +240,28 @@ a:visited {
 .fw-label {
   width: 10rem;
   display: inline-block;
+}
+
+.recording {
+  background-color: var(--dark-red);
+  color: var(--red);
+  border-color: var(--red);
+}
+.recording:hover {
+  background-color: var(--red);
+  color: var(--dark-red);
+  border-color: var(--dark-red);
+}
+
+/* Monaco Editor styles */
+.editor-error {
+  background-color: var(--dark-red);
+}
+
+.glyph-error {
+  padding-left: 10px;
+  font-size: 14px;
+  &::before {
+    content: '💀';
+  }
 }

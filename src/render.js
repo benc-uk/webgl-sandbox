@@ -1,20 +1,27 @@
+// ===============================================================================
+// Main app function to run the GL shader
+// ===============================================================================
+
 import { getGl, resize } from '../lib/gl.js'
-import { show, hide, setText, $, setHtml } from '../lib/dom.js'
-import { selector, resizeEditor, addErrorLine, clearErrors } from './editor.js'
+import { addErrorLine, clearErrors, resizeEditor, selector } from './editor.js'
 
 import * as twgl from 'twgl.js'
 
 import vertShader from './shaders/base.glsl.vert?raw'
 import boilerPlate from './shaders/boilerplate.glsl?raw'
-import { getShaderText } from './storage.js'
-import { ANALYSER_BUFFER_SIZE, getActiveDevice, getAnalyser } from './audio.js'
-import { getNotes, getCC } from './midi.js'
-import { createNoiseRand } from './noise.js'
+import { getShaderCode } from './storage.js'
+import { ANALYSER_BUFFER_SIZE, getAnalyser } from './audio.js'
+import { getTexture } from './midi.js'
+import * as rand from './rand-noise.js'
+import { hideError, renderUpdate, showError, statusUpdate } from './events.js'
 
 let looping = false
 let paused = false
 let lastTime = 0
 let elapsedTime = 0
+let fps = 0
+let stream
+let mediaRecorder
 
 export function execPressed() {
   looping = false
@@ -27,7 +34,7 @@ export function execPressed() {
   // This trick allows the render loop to catch the running flag and exit
   // Without this you get a lot of WebGL errors, don't ask, it works...
   setTimeout(() => {
-    let code = getShaderText().trim()
+    const code = getShaderCode().trim()
     if (!code || code.length === 0) {
       showError("No shader code! That's not going to work...")
       return
@@ -56,7 +63,7 @@ function execShader(shaderCode) {
 
   const progInfo = twgl.createProgramInfo(gl, [vertShader, shaderCode], (errMessage) => {
     let niceErr = 'Error compiling shader:\n\n'
-    for (let line of errMessage.split('\n')) {
+    for (const line of errMessage.split('\n')) {
       if (line.includes('^^^ ERROR')) {
         const lineNum = line.match(/ERROR: \d+:(\d+):/)[1]
         const message = line.match(/ERROR: \d+:\d+:(.*)$/)[1]
@@ -68,6 +75,7 @@ function execShader(shaderCode) {
     }
 
     showError(niceErr)
+
     console.error('💥 Failed to compile shader!')
     console.error(errMessage)
   })
@@ -80,31 +88,32 @@ function execShader(shaderCode) {
   gl.useProgram(progInfo.program)
 
   // Add a single quad to be rendered across the whole frame
-  const arrays = {
+  const quadArray = {
     position: [-1, -1, 0, 1, -1, 0, -1, 1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0],
   }
 
-  const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays)
+  const { noiseTex, randomTex, noise3Tex } = rand.createTextures(gl, twgl)
+
+  const bufferInfo = twgl.createBufferInfoFromArrays(gl, quadArray)
   twgl.setBuffersAndAttributes(gl, progInfo, bufferInfo)
 
-  const { noiseTex, randomTex } = createNoiseRand(gl, twgl)
+  statusUpdate(paused, stream)
 
   /**
    * Inner function to render the shader
    * @param {number} time
    */
   function render(time) {
+    fps = 1000 / (time - lastTime)
+
     // Audio and frequency data
-    let dataArray = new Uint8Array(ANALYSER_BUFFER_SIZE)
+    const dataArray = new Uint8Array(ANALYSER_BUFFER_SIZE)
     const analyser = getAnalyser()
     if (analyser) {
       analyser.getByteFrequencyData(dataArray)
     }
 
-    // MIDI data
-    const notes = getNotes()
-    const cc = getCC()
-
+    // Advance time
     let deltaTime = 0
     if (!paused) {
       deltaTime = (time - lastTime) / 1000
@@ -118,20 +127,19 @@ function execShader(shaderCode) {
       return
     }
 
-    const canvas = gl.canvas
     const uniforms = {
       u_time: elapsedTime,
       u_delta: deltaTime,
-      u_resolution: [canvas.width, canvas.height],
-      u_aspect: [canvas.clientWidth / canvas.clientHeight],
+      u_resolution: [gl.canvas.width, gl.canvas.height],
+      u_aspect: [gl.canvas.clientWidth / gl.canvas.clientHeight],
       u_analyser: dataArray,
-      u_midi_notes: notes,
-      u_midi_cc: cc,
+      u_midi_tex: getTexture(gl, twgl),
       u_rand_tex: randomTex,
       u_noise_tex: noiseTex,
+      u_noise_tex3: noise3Tex,
     }
 
-    gl.viewport(0, 0, canvas.width, canvas.height)
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
     gl.clearColor(0.0, 0.0, 0.0, 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
@@ -141,7 +149,7 @@ function execShader(shaderCode) {
 
     // Update status every 150ms
     if (time % 150 < 30) {
-      updateStatus()
+      renderUpdate(fps, elapsedTime)
     }
 
     // Loop and update the time
@@ -152,7 +160,7 @@ function execShader(shaderCode) {
   // It's all about this one line of code
   console.log('🚀 Starting render loop')
   looping = true
-  updateStatus()
+  renderUpdate(fps, elapsedTime)
   requestAnimationFrame(render)
 }
 
@@ -160,42 +168,47 @@ function execShader(shaderCode) {
 export function rewind() {
   elapsedTime = 0
   lastTime = performance.now()
-  updateStatus()
+  statusUpdate()
 }
 
 // Pause or resume the shader
 export function pauseOrResume() {
-  $('#pause').innerHTML = paused ? '<i class="fa-fw fa-solid fa-pause"></i>' : '<i class="fa-fw fa-solid fa-play"></i>'
   paused = !paused
-  updateStatus()
+  statusUpdate()
 }
 
-// Hide the error message
-export function hideError() {
-  hide('#error')
-}
-
-/**
- * Show an error message
- * @param {string} errMessage
- */
-export function showError(errMessage = '') {
-  setText('#error', errMessage)
-  show('#error')
-  updateStatus()
-}
-
-export function updateStatus() {
-  let status = paused ? 'Paused' : 'Running'
-
-  let statusText = `${status}: ${elapsedTime.toFixed(2)}s`
-  if (!looping) {
-    statusText = 'Error!'
+export function videoCapture(outputEl) {
+  if (stream) {
+    console.log('📽️ Stopping video capture')
+    mediaRecorder.stop()
+    return false
   }
 
-  if (getActiveDevice()) {
-    statusText += `<br>Audio: ${getActiveDevice().label}`
+  stream = outputEl.captureStream(60)
+  const recordedChunks = []
+  mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' })
+
+  mediaRecorder.ondataavailable = (e) => {
+    console.log('🍗 Video data available')
+    if (e.data.size > 0) recordedChunks.push(e.data)
   }
 
-  setHtml('#status', statusText)
+  mediaRecorder.onstop = () => {
+    console.log('💽 Saving video to file')
+
+    const blob = new Blob(recordedChunks, { type: 'video/mp4' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'shaderbox.mp4'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    stream = null
+  }
+
+  console.log('📽️ Starting video capture')
+  mediaRecorder.start()
+
+  return true
 }

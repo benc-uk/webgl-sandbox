@@ -16,5 +16,13 @@ export default [
         sourceType: 'module',
       },
     },
+    rules: {
+      'no-unused-vars': 'error',
+      'no-console': 'off',
+      'no-undef': 'error',
+      'no-var': 'error',
+      'prefer-const': 'error',
+      // 'sort-imports': 'warn',
+    },
   },
 ]

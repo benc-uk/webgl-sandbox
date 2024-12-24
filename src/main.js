@@ -1,16 +1,23 @@
+// ===============================================================================
+// App entry point and initialisation of all DOM to JS bindings
+// ===============================================================================
+
 import '../css/style.css'
 import '../lib/fontawesome/css/solid.css'
 import '../lib/fontawesome/css/fontawesome.css'
 
-// prettier-ignore
-import { $, $$, onClick, onKeyDownCode, onFullscreenChange, onChange, 
-         disable, enable, floatValue, showDialog, closeDialog } from '../lib/dom.js'
-import { getGl, resize } from '../lib/gl.js'
-import { pauseOrResume, execPressed, rewind, hideError, showError } from './app.js'
-import { initEditor, selector, editor, resizeEditor } from './editor.js'
-import { loadSample } from './storage.js'
 import * as audio from './audio.js'
 import * as midi from './midi.js'
+
+// prettier-ignore
+import { $, $$, closeDialog, disable, enable, floatValue, 
+         onChange, onClick, onFullscreenChange, onKeyDownCode, showDialog } from '../lib/dom.js'
+import { getGl, resize } from '../lib/gl.js'
+import { execPressed, pauseOrResume, rewind, videoCapture } from './render.js'
+import { editor, initEditor, resizeEditor, selector } from './editor.js'
+import { loadExample } from './storage.js'
+import { showError, hideError, deviceUpdate } from './events.js'
+import { cfg, loadConfig } from './config.js'
 
 // Entry point for the whole app
 window.addEventListener('DOMContentLoaded', async () => {
@@ -18,6 +25,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   getGl(selector) // We call this early to make sure we have a GL context, but we don't need it yet
   hideError()
 
+  loadConfig()
+
+  console.dir(cfg)
   $('#version').innerText = `v${import.meta.env.PACKAGE_VERSION}`
 
   onClick('#exec', execPressed)
@@ -75,6 +85,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         const output = $('#audio-output').checked
 
         await audio.initInput(device, output, smoothing, gain)
+        deviceUpdate()
         closeDialog('#audio-dialog')
       })
     }
@@ -138,8 +149,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   $$('.file').forEach((fileEl) => {
     fileEl.addEventListener('click', async () => {
       try {
-        const shaderText = await loadSample(fileEl.dataset.file)
-        editor.setValue(shaderText)
+        const code = await loadExample(fileEl.dataset.file)
+        editor.setValue(code)
         closeDialog('#file-dialog')
         rewind()
         execPressed()
@@ -186,7 +197,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       disable('#midi-devices')
       $('#midi-devices').innerHTML = '<option>MIDI access denied</option>'
     } else {
-      $('#audio-devices').innerHTML = '<option value="none">--- Select Device ---</option>'
+      $('#midi-devices').innerHTML = '<option value="none">--- Select Device ---</option>'
       const activeDeviceId = midi.getActiveDeviceId()
 
       showDialog('#midi-dialog')
@@ -207,6 +218,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       onClick('#midi-in-open', async () => {
         const deviceId = $('#midi-devices').value
         await midi.initInput(deviceId)
+        deviceUpdate()
         closeDialog('#midi-dialog')
       })
     }
@@ -224,20 +236,23 @@ window.addEventListener('DOMContentLoaded', async () => {
     closeDialog('#midi-dialog')
   })
 
-  // Initialise the Monaco text editor, and then run the shader when it's ready
-  initEditor(execPressed)
-
-  // if URL fragment is present, load it as a sample
-  setTimeout(async () => {
-    if (window.location.hash) {
-      const sample = window.location.hash.substring(1)
-      console.log(`Loading sample: ${sample}`)
-
-      const shaderText = await loadSample(sample)
-      editor.setValue(shaderText)
-      closeDialog('#file-dialog')
-      rewind()
-      execPressed()
+  onClick('#rec', async () => {
+    const started = videoCapture($('#output'))
+    if (started) {
+      $('#rec').classList.add('recording')
+    } else {
+      $('#rec').classList.remove('recording')
     }
-  }, 200)
+  })
+
+  // get 'f' from the URL query string to force load a file
+  const urlParams = new URLSearchParams(window.location.search)
+  const fileLoad = urlParams.get('f')
+
+  if (fileLoad) {
+    window.history.replaceState({}, document.title, window.location.pathname)
+  }
+
+  // Initialise the Monaco text editor, and then run the shader when it's ready
+  initEditor(execPressed, fileLoad)
 })

@@ -1,7 +1,7 @@
 {
   "name": "webgl-shader-playground",
   "private": true,
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "author": "Ben Coleman",
   "license": "MIT",
@@ -9,7 +9,8 @@
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "eslint ./src/ && prettier --check ./src/"
+    "check": "eslint ./src/ ./lib/ && prettier --check ./src/",
+    "fix": "eslint --fix ./src/ ./lib/  && prettier --write ./src/"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

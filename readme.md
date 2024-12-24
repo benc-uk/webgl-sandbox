@@ -8,9 +8,11 @@ Features:
 
 - Interactive code editor with syntax highlighting using [Monaco editor](https://microsoft.github.io/monaco-editor/)
 - Updates to shaders apply without interrupting rendering
+- Shader compilation error highlighting
 - A set of samples/examples to get you started (see below)
 - Audio input support and spectrum analyser
-- MIDI support (coming soon)
+- MIDI support
+- Video capture
 
 ![](./etc/screencap.png)
 
@@ -31,9 +33,10 @@ The toolbar is the main way to interact with the app
 - Rewind time and restart the clock
 - Open provided sample shader, several examples are provided, and more coming
 - Configure audio and setup incoming audio device or microphone
-- Configure MIDI (coming soon)
+- Configure MIDI input devices
 - Go fullscreen, press escape to exit. Fullscreen can also be entered with a double click or tap.
 - Toggle the code editor view on/off
+- Capture the output view as a video, click again to stop and save the capture as a MP4 file.
 
 Any code you enter is saved locally, and will be reloaded when you re-open the page.
 
@@ -61,8 +64,14 @@ There are several builtin uniforms provided and set automatically
 ```glsl
 vec2 u_resolution;    // Resolution of the output
 float u_time;         // Current time in seconds, advances every frame
+float u_delta;        // Time delta, usually constant
 float u_aspect;       // Aspect ration of the output
 int u_analyser[512];  // Audio frequency data from spectrum analyser
+
+sampler2D u_rand_tex;   // Texture holding random values in R,G,B & A 256x256
+sampler2D u_noise_tex;  // Texture holding simplex noise 256x256
+sampler2D u_midi_tex;   // Texture holding 16x128 MIDI note & CC data
+sampler3D u_noise_tex3; // Texture holding 3D simplex noise values
 ```
 
 ### Builtin Functions
@@ -74,9 +83,25 @@ There are several builtin functions provided
 // Pass -0.5 as offset to center things
 vec2 screenPos(float offset)
 
+// Trig functions scaled to 0-1 range
+sin01(float in, float scale)
+cos01(float in, float scale)
+tan01(float in, float scale)
+
 // Convert HSV to RGB
 vec3 hsv2rgb(float h, float s, float v)
 
 // Helper to get audio frequency data, returns normalized value
 float audioFreqData(int binIndex) {
+
+// MIDI functions
+float midiNote(int chan, int note)
+float midiCC(int chan, int cc)
+
+// Random and noise functions
+float goldNoise(in vec2 xy, in float seed)
+float randGold(float r)
+float randTex(float r)
+float octaveNoise(vec2 pos, int octaves)
+float octaveNoise3(vec3 pos, int octaves)
 ```

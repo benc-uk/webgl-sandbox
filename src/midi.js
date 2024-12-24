@@ -1,11 +1,19 @@
+// ===============================================================================
+// MIDI input handling and wrapper around the Web MIDI API library in lib/midi.js
+// ===============================================================================
+
 import * as midi from '../lib/midi.js'
 
 /** @type {string} */
 let activeDeviceId
 
-// 1D array of 16 channels * 128 notes
-let channelNotes = new Array(16 * 128).fill(0)
-let channelCC = new Array(16 * 128).fill(0)
+// MIDI is fixed to 16 channels * 128 notes or CC values
+const CHANNELS = 16
+const NOTES = 128
+
+// Array of 16 channels * 128 notes * 4 values RGBA
+// Will be used as a texture
+const midiData = new Uint8Array(NOTES * CHANNELS * 4)
 
 /**
  * Initialize MIDI input for the given device ID
@@ -18,7 +26,7 @@ export async function initInput(deviceId) {
   }
 
   activeDeviceId = deviceId
-
+  midiData.fill(0)
   device.addEventListener('midimessage', messageHandler)
 }
 
@@ -28,52 +36,72 @@ export async function initInput(deviceId) {
  * @returns {void}
  */
 function messageHandler(rawMidiMsg) {
-  let msg = midi.decodeMessage(rawMidiMsg)
+  const msg = midi.decodeMessage(rawMidiMsg)
 
-  if (msg.type === 'Note on') {
-    // Need to store in 1D array for GLSL, so we need to calculate the index, there are 16 channels
-    channelNotes[msg.channel * 16 + msg.data1] = msg.data2
+  // Need to store in 1D array for GLSL
+  const offset = msg.channel * NOTES * 4 + msg.data1 * 4
+
+  // Note on and off messages go in the red channel
+  if (msg.type === 'Note on' || msg.type === 'Note off') {
+    // Need to double the value from 0-127 to 0-255
+    let velo = msg.data2 * 2
+    if (msg.type === 'Note off') {
+      velo = 0
+    }
+
+    // Red
+    midiData[offset + 0] = velo
   }
 
-  if (msg.type === 'Note off') {
-    channelNotes[msg.channel * 16 + msg.data1] = 0
-  }
-
+  // Control change messages go in the green channel
   if (msg.type === 'Control change') {
-    channelCC[msg.channel * 16 + msg.data1] = msg.data2
+    // Green, also need to double the value to go from 0-127 to 0-255
+    midiData[offset + 1] = msg.data2 * 2
   }
 }
 
 /**
- * Return all 16 channels of notes each with 128 notes (0-127) and -1 if note is off
- * @returns {number[]}
+ * Return both note and control change data as a texture
+ * @returns {WebGLTexture}
+ * @param {WebGLRenderingContext} gl -
+ * @param {Object} twgl - The twgl.js library
  */
-export function getNotes() {
-  return channelNotes
-}
-
-/**
- * Return all 16 channels of CCs each with 128 CCs (0-127) and -1 if CC is off
- * @returns {number[]}
- */
-export function getCC() {
-  return channelCC
+export function getTexture(gl, twgl) {
+  return twgl.createTexture(gl, {
+    min: gl.NEAREST,
+    mag: gl.NEAREST,
+    src: midiData,
+    width: NOTES,
+    height: CHANNELS,
+    wrap: gl.CLAMP_TO_EDGE,
+  })
 }
 
 export function getActiveDeviceId() {
   return activeDeviceId
 }
 
+export function getActiveDeviceName() {
+  if (!activeDeviceId) {
+    return null
+  }
+
+  return midi.getInputDevice(activeDeviceId).name
+}
+
 export async function listInputDevices() {
+  // Check if MIDI access is allowed
   const perms = await navigator.permissions.query({
     name: 'midi',
   })
 
+  // If MIDI access is not allowed, request it and reload the page
   if (perms.state === 'prompt') {
     await navigator.requestMIDIAccess()
     window.location.reload()
   }
 
+  // Well sheeeit, MIDI access is denied, not much we can do here
   if (perms.state === 'denied') {
     return null
   }
@@ -82,6 +110,13 @@ export async function listInputDevices() {
   await midi.getAccess()
   const devices = midi.getInputDevices()
 
+  /**
+   * @typedef {Object} Device
+   * @property {string} id - The device ID used to reference the device
+   * @property {string} name - The device name
+   */
+
+  /** @type {Device[]}*/
   const deviceList = []
   devices.forEach((device) => {
     deviceList.push({

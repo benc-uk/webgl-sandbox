@@ -34,10 +34,13 @@ void main() {
   scene[1] = Sphere(vec3(0.0, 1.0, 0.0), 2.0, vec3(0.8, 0.25, 0.2), 100.0);
   scene[2] = Sphere(vec3(0.0, -1.0, 0.0), 1.2, vec3(0.1, 0.7, 0.1), 6.0);
 
-  vec2 screenPos = gl_FragCoord.xy / u_resolution.xy;
-  // Fix aspect ratio
-  screenPos.x = (screenPos.x * u_aspect) - ((u_aspect - 1.0) / 2.0);
+  vec2 screenPos = screenPos(0.0);
 
+  // Fire background effect using 3D noise for no good reson
+  float z = abs(mod(u_time* 0.07, 2.0) - 1.0) ;
+  bgColor *= octaveNoise3(vec3(screenPos * 0.7, z), 10) * 2.3;
+  bgColor *= (1.2 - screenPos.y) * vec3(2.3, 0.2, 0.0);
+  
   // Rotate spheres around center each frame
   scene[0].position.y = 1.5 * sin(u_time*2.0);
   scene[1].position.x = 12.5 * cos(u_time*0.8);
@@ -61,7 +64,7 @@ void main() {
   }
 
   // Background colour
-  vec3 color = bgColor * screenPos.y + ((1.0 - screenPos.y) * vec3(0.0, 0.2, 0.0));
+  vec3 color = bgColor;
 
   // If we hit a sphere, calculate lighting and shading
   if (hitIndex >= 0) {
@@ -93,7 +96,7 @@ void main() {
     }
 
     // Final colour with classic Blinn-Phong shading & lighting model
-    color = hitSphere.color * diff + ambient + specular;
+    color = (hitSphere.color) * diff + ambient + specular;
   }
 
   fragColor = vec4(color, 1.0);

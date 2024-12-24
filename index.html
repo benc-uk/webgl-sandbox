@@ -18,14 +18,14 @@
     <h3>Load example shader</h3>
     <ul>
       <li class="file" data-file="blank">Blank</li>
-      <li class="file" data-file="circles">Hypno Circles</li>
-      <li class="file" data-file="scrap">Test</li>
-
+      <li class="file" data-file="circles">Hypno circles</li>
+      <li class="file" data-file="acid">Acid trip</li>
       <li class="file" data-file="colours">Colours</li>
       <li class="file" data-file="raytracer">Raytracer</li>
+      <li class="file" data-file="scrap">Test</li>
       <div class="file-sect">Audio shaders:</div>
-      <li class="file" data-file="analyser">Spectrum Analyser</li>
-      <li class="file" data-file="circles-analyser">Hypno Circles (Audio)</li>
+      <li class="file" data-file="analyser">Spectrum analyser</li>
+      <li class="file" data-file="circles-analyser">Hypno circles</li>
     </ul>
     <div class="flex center"><button id="load-cancel" class="btn-small">CANCEL</button></div>
   </dialog>
@@ -87,14 +87,20 @@
     <button id="audio" title="Configure audio"><i class="fa-solid fa-volume-high"></i></i></button>
     <button id="midi" title="Configure MIDI"><i class="fa-fw fa-solid fa-music"></i></button>
     &nbsp;&nbsp;
-    <button id="fullscreen" title="Go fullscreen"><i class="fa-fw fa-solid fa-camera"></i></button>
+    <button id="fullscreen" title="Go fullscreen"><i class="fa-fw fa-solid fa-expand"></i></button>
     <button id="toggle" title="Toggle editor visible"><i class="fa-fw fa-solid fa-code"></i></button>
+    <button id="rec" title="Capture video"><i class="fa-fw fa-solid fa-video"></i></button>
 
-    <div id="status"></div>
+    <div id="renderStatus" class="status"></div>
+    <div class="status">
+      <div id="status"></div>
+      <div id="deviceAudio"></div>
+      <div id="deviceMIDI"></div>
+    </div>
 
     <div id="note">
-      <span id="version"></span>
-      Ben Coleman, 2024 <a href="https://github.com/benc-uk/gpu-playground" target="_blank">[GitHub]</a>
+      <span id="version" title="Ben Coleman, 2024"></span>
+      <br><a href="https://github.com/benc-uk/gpu-playground" target="_blank">[GitHub]</a>
     </div>
   </div>
 
