@@ -2,8 +2,9 @@
 // Handles the code editor which is based on Monaco
 // ===============================================================================
 
-import { $ } from '../lib/dom.js'
-import { getShaderCode, loadExample, saveShaderCode } from './storage.js'
+const $ = document.querySelector.bind(document)
+import { execPressed } from './render.js'
+import { getShaderCode, loadExampleCode, saveShaderCode } from './storage.js'
 
 // Used everywhere, selector for the GL canvas
 export const selector = '#output'
@@ -40,11 +41,11 @@ export function initEditor(doneCallback, forceFileLoad) {
 
     let code
     if (forceFileLoad) {
-      code = await loadExample(forceFileLoad)
+      code = await loadExampleCode(forceFileLoad)
     } else {
       code = getShaderCode()
       if (code === null) {
-        code = await loadExample('raytracer')
+        code = await loadExampleCode('raytracer')
       }
     }
 
@@ -62,7 +63,7 @@ export function initEditor(doneCallback, forceFileLoad) {
 
     // Trap Ctrl+S to run the shader and prevent the browser from saving the file
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      $('#exec').click()
+      execPressed()
     })
 
     editor.onDidChangeModelContent(() => {
@@ -106,15 +107,4 @@ export function resizeEditor() {
 
   $('#code').style.height = `${height}px`
   $('#code').style.width = `${width}px`
-}
-
-// Toggle the editor on and off
-export function toggleEditor() {
-  const codeEl = $('#code')
-  if (codeEl.style.display === 'none') {
-    codeEl.style.display = 'block'
-    resizeEditor()
-  } else {
-    codeEl.style.display = 'none'
-  }
 }

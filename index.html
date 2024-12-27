@@ -13,99 +13,114 @@
   <title>WebGL Shader Playground</title>
 </head>
 
-<body>
-  <dialog id="file-dialog">
+<body x-data="app">
+  <!-- Dialog box for loading example shaders -->
+  <dialog x-ref="fileDialog">
     <h3>Load example shader</h3>
     <ul>
-      <li class="file" data-file="blank">Blank</li>
-      <li class="file" data-file="circles">Hypno circles</li>
-      <li class="file" data-file="acid">Acid trip</li>
-      <li class="file" data-file="colours">Colours</li>
-      <li class="file" data-file="raytracer">Raytracer</li>
-      <li class="file" data-file="scrap">Test</li>
-      <div class="file-sect">Audio shaders:</div>
-      <li class="file" data-file="analyser">Spectrum analyser</li>
-      <li class="file" data-file="circles-analyser">Hypno circles</li>
+      <template x-for="file in samples">
+        <li @click="loadSample(file.name)" x-text="file.title"></li>
+      </template>
     </ul>
-    <div class="flex center"><button id="load-cancel" class="btn-small">CANCEL</button></div>
+    <div class="flex center"><button @click="$refs.fileDialog.close()" class="btn-small">CANCEL</button></div>
   </dialog>
 
-  <dialog id="audio-dialog">
+  <!-- Dialog box for audio configuration -->
+  <dialog x-ref="audioDialog">
     <h3>Audio Settings</h3>
     <hr>
-    <label class="fw-label" for="audio-output">Enable output</label>
-    <input type="checkbox" id="audio-output" checked><br>
-
-    <label class="fw-label" for="audio-smoothing">Analyser smoothing</label>
-    <input type="range" id="audio-smoothing" min="0" max="0.99" step="0.05" value="0.5"><br>
-
-    <label class="fw-label" for="audio-gain">Input gain</label>
-    <input type="range" id="audio-gain" min="0" max="10.0" step="0.05" value="1.0">
-
-    <h4 class="mt-2">🎚️ Use audio input / mic</h4>
-    <select name="audio-devices" id="audio-devices">
-      <option value="none">--- Select Device ---</option>
+    <select :disabled="disableAudioSelect" x-model="selectedAudioDeviceId">
+      <template x-for="device in audioDevices">
+        <option :value="device.deviceId" x-text="device.label"></option>
+      </template>
     </select>
+    <div class="mt-1" x-cloak x-show="!audioOpenButDisable()">
+      <label class="fw-label" for="audio-output">Enable output</label>
+      <input type="checkbox" x-model="audioOutput"><br>
 
-    <button id="audio-in-open" class="btn-small" disabled>OPEN</button>
-    <button id="audio-in-close" class="btn-small" disabled>CLOSE</button>
+      <label class="fw-label" for="audio-smoothing">Analyser smoothing</label>
+      <input type="range" x-model="audioSmoothing" min="0" max="0.99" step="0.05" value="0.5"><br>
 
-    <!-- <h4 class="mt-2">📂 Use audio file</h4> -->
-    <hr>
+      <label class="fw-label" for="audio-gain">Input gain</label>
+      <input type="range" x-model="audioGain" min="0" max="10.0" step="0.05" value="1.0">
+    </div>
+    <button @click="audioOpen" class="btn-small mt-1" :disabled="audioOpenButDisable">OPEN</button>
+    <button @click="audioClose" class="btn-small" :disabled="!activeAudioDevice">CLOSE</button>
+
+    <hr class="mt-1">
+
     <div class="flex center">
-      <button id="audio-cancel" class="btn-small">CANCEL</button>
+      <button @click="$refs.audioDialog.close()" class="btn-small">CANCEL</button>
     </div>
   </dialog>
 
-  <dialog id="midi-dialog">
+  <!-- Dialog box for MIDI configuration -->
+  <dialog x-ref="midiDialog">
     <h3>MIDI Settings</h3>
     <hr>
-    <select name="midi-devices" id="midi-devices">
-      <option value="none">--- Select Device ---</option>
+    <select x-model="selectedMidiDeviceId">
+      <template x-for="device in midiDevices">
+        <option :value="device.id" x-text="device.name"></option>
+      </template>
     </select>
-
-    <button id="midi-in-open" class="btn-small" disabled>OPEN</button>
-
+    <button @click="midiOpen" class="btn-small" :disabled="selectedMidiDeviceId == '-1'">OPEN</button>
     <hr>
     <div class="flex center">
-      <button id="midi-cancel" class="btn-small">CANCEL</button>
+      <button @click="$refs.midiDialog.close()" class="btn-small">CANCEL</button>
     </div>
   </dialog>
 
-  <div id="output-wrap">
-    <canvas id="output" tabindex='1' width="800" height="400"></canvas>
+  <!-- Error message -->
+  <div class="error" x-cloak x-show="$store.error" x-text="$store.error"></div>
+
+  <!-- Main WebGL output canvas -->
+  <div x-ref="outputWrap" id="output-wrap">
+    <canvas id="output" x-ref="output" width="800" height="400" @dblclick="fullscreen" @keydown.space="pauseOrResume"
+      tabindex="-1"></canvas>
   </div>
 
-  <div id="error"></div>
-
+  <!-- Toolbar area -->
   <div id="toolbar" class="flex">
-    <button id="exec" title="Execute and run code"><i class="fa-fw fa-solid fa-flag-checkered"></i></button>
-    <button id="pause" title="Pause/Run"><i class="fa-fw fa-solid fa-pause"></i></button>
-    <button id="rewind" title="Rewind time to start"><i class="fa-fw  fa-solid fa-backward-step"></i></button>
+    <button @click="execPressed" title="Execute and run code"><i class="fa-fw fa-solid fa-flag-checkered"></i></button>
+    <button @click="pauseOrResume" title="Pause/Run" :class="$store.paused ? 'fa-play' : 'fa-pause'"><i
+        class="fa-fw fa-solid"></i></button>
+    <button @click="rewind" title="Rewind time to start"><i class="fa-fw  fa-solid fa-backward-step"></i></button>
     &nbsp;&nbsp;
-    <button id="load" title="Load example file"><i class="fa-fw fa-solid fa-folder"></i></button>
-    <button id="audio" title="Configure audio"><i class="fa-solid fa-volume-high"></i></i></button>
-    <button id="midi" title="Configure MIDI"><i class="fa-fw fa-solid fa-music"></i></button>
+    <button @click="loadClicked" title="Load example file"><i class="fa-fw fa-solid fa-folder"></i></button>
+    <button @click="showAudioDialog" title="Configure audio"><i class="fa-solid fa-volume-high"></i></i></button>
+    <button @click="showMIDIDialog" title="Configure MIDI"><i class="fa-fw fa-solid fa-music"></i></button>
     &nbsp;&nbsp;
-    <button id="fullscreen" title="Go fullscreen"><i class="fa-fw fa-solid fa-expand"></i></button>
-    <button id="toggle" title="Toggle editor visible"><i class="fa-fw fa-solid fa-code"></i></button>
-    <button id="rec" title="Capture video"><i class="fa-fw fa-solid fa-video"></i></button>
+    <button @click="fullscreen" title="Go fullscreen"><i class="fa-fw fa-solid fa-expand"></i></button>
+    <button @click="toggleCode" title="Toggle editor visible"><i class="fa-fw fa-solid fa-code"></i></button>
+    <button @click="videoCapture($refs.output)" :class="$store.recording ? 'recording' : ''" title="Capture video"><i
+        class="fa-fw fa-solid fa-video"></i></button>
 
-    <div id="renderStatus" class="status"></div>
+    <!-- Realtime status info FPS & time -->
     <div class="status">
-      <div id="status"></div>
-      <div id="deviceAudio"></div>
-      <div id="deviceMIDI"></div>
+      <div>
+        FPS:&nbsp;&nbsp;<span x-text="$store.fps"></span>
+      </div>
+      <div>
+        Time:&nbsp;<span x-text="$store.elapsedTime"></span>
+      </div>
     </div>
 
+    <!-- Running/paused & audio/MIDI status -->
+    <div class="status">
+      <div>Status: <span x-text="$store.error ? 'Error!' : $store.status"></span></div>
+      <div x-show="$store.audioDeviceName">Audio: <span x-text="$store.audioDeviceName"></span></div>
+      <div x-show="$store.midiDeviceName">MIDI: <span x-text="$store.midiDeviceName"></span></div>
+    </div>
+
+    <!-- Version info -->
     <div id="note">
-      <span id="version" title="Ben Coleman, 2024"></span>
+      <span x-text="version" title="Ben Coleman, 2024"></span>
       <br><a href="https://github.com/benc-uk/gpu-playground" target="_blank">[GitHub]</a>
     </div>
   </div>
 
   <!-- Monaco code editor -->
-  <div id="code"></div>
+  <div id="code" x-show="showCode"></div>
 </body>
 
 </html>

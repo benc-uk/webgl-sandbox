@@ -5,254 +5,179 @@
 import '../css/style.css'
 import '../lib/fontawesome/css/solid.css'
 import '../lib/fontawesome/css/fontawesome.css'
+import Alpine from 'alpinejs'
 
 import * as audio from './audio.js'
 import * as midi from './midi.js'
 
-// prettier-ignore
-import { $, $$, closeDialog, disable, enable, floatValue, 
-         onChange, onClick, onFullscreenChange, onKeyDownCode, showDialog } from '../lib/dom.js'
 import { getGl, resize } from '../lib/gl.js'
 import { execPressed, pauseOrResume, rewind, videoCapture } from './render.js'
 import { editor, initEditor, resizeEditor, selector } from './editor.js'
-import { loadExample } from './storage.js'
-import { showError, hideError, deviceUpdate } from './events.js'
-import { cfg, loadConfig } from './config.js'
+import { loadExampleCode } from './storage.js'
 
-// Entry point for the whole app
-window.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚦 Initialising...')
-  getGl(selector) // We call this early to make sure we have a GL context, but we don't need it yet
-  hideError()
+Alpine.data('app', () => ({
+  version: `v${import.meta.env.PACKAGE_VERSION}`,
 
-  loadConfig()
+  showCode: true,
+  isFullscreen: false,
 
-  console.dir(cfg)
-  $('#version').innerText = `v${import.meta.env.PACKAGE_VERSION}`
+  audioDevices: [],
+  activeAudioDevice: null,
+  selectedAudioDeviceId: '-1',
+  disableAudioSelect: false,
+  audioSmoothing: 0.5,
+  audioOutput: true,
+  audioGain: 1.0,
 
-  onClick('#exec', execPressed)
+  midiDevices: [],
+  selectedMidiDeviceId: '-1',
 
-  onClick('#pause', pauseOrResume)
+  samples: [
+    { title: 'Blank', name: 'blank' },
+    { title: 'Hypno circles', name: 'circles' },
+    { title: 'Acid trip', name: 'acid' },
+    { title: 'Colour Wave', name: 'colours' },
+    { title: 'Raytracer', name: 'raytracer' },
+    { title: 'Scrap', name: 'test' },
+    { title: 'Spectrum analyser', name: 'analyser' },
+    { title: 'Circles analyser', name: 'circles-analyser' },
+  ],
 
-  onClick('#rewind', rewind)
+  init() {
+    console.log('🚦 Initialising...')
+    getGl(selector) // We call this early to make sure we have a GL context, but we don't need it yet
 
-  onClick('#load', () => {
-    hideError()
-    showDialog('#file-dialog')
-  })
+    // Get 'f' from the URL query string to load a file at startup
+    const urlParams = new URLSearchParams(window.location.search)
+    const fileLoad = urlParams.get('f')
 
-  onClick('#fullscreen', () => {
-    $('#output').requestFullscreen()
+    if (fileLoad) {
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+
+    // Initialise the Monaco text editor, and then run the shader when it's ready
+    initEditor(execPressed, fileLoad)
+
+    Alpine.store('error', '')
+
+    window.addEventListener('resize', () => {
+      resize()
+      resizeEditor()
+    })
+
+    new MutationObserver(() => {
+      resize()
+      resizeEditor()
+    }).observe(this.$refs.outputWrap, { attributes: true })
+  },
+
+  loadClicked() {
+    Alpine.store('error', '')
+    this.$refs.fileDialog.showModal()
+  },
+
+  async loadSample(file) {
+    this.$refs.fileDialog.close()
+
+    try {
+      const code = await loadExampleCode(file)
+      editor.setValue(code)
+      rewind()
+      execPressed()
+    } catch (err) {
+      Alpine.store('error', err.message)
+    }
+  },
+
+  async showAudioDialog() {
+    Alpine.store('error', '')
+    this.$refs.audioDialog.showModal()
+
+    this.audioDisabled = false
+    this.audioDevices = await audio.listInputDevices()
+    this.activeAudioDevice = null
+    if (this.audioDevices === null) {
+      // If access is denied, we get null back so put a dummy device in the list
+      this.audioDevices = [{ label: 'Input audio access denied', deviceId: '-1' }]
+      this.disableAudioSelect = true
+    } else {
+      this.disableAudioSelect = false
+      this.audioDevices.unshift({ label: '--- Select Devices ---', deviceId: '-1' })
+      this.activeAudioDevice = audio.getActiveDevice()
+
+      // Disable the select dropdown if we have an active device
+      if (this.activeAudioDevice) {
+        this.audioDevices = [this.activeAudioDevice]
+        this.disableAudioSelect = true
+      }
+    }
+  },
+
+  audioOpenButDisable() {
+    if (this.activeAudioDevice) return true
+    if (this.selectedAudioDeviceId === '-1') return true
+    return false
+  },
+
+  async audioOpen() {
+    const device = this.audioDevices.find((d) => d.deviceId === this.selectedAudioDeviceId)
+
+    Alpine.store('audioDeviceName', device.label)
+    await audio.initInput(device, this.audioOutput, this.audioSmoothing, this.audioGain)
+    this.$refs.audioDialog.close()
+  },
+
+  async audioClose() {
+    audio.stopInput()
+    Alpine.store('audioDeviceName', '')
+    this.selectedAudioDeviceId = '-1'
+    this.$refs.audioDialog.close()
+  },
+
+  async showMIDIDialog() {
+    Alpine.store('error', '')
+    this.$refs.midiDialog.showModal()
+
+    this.midiDevices = await midi.listInputDevices()
+    if (this.midiDevices === null) {
+      this.midiDevices = [{ name: 'MIDI access denied', id: '-1' }]
+    } else {
+      this.midiDevices.unshift({ name: '--- Select Device ---', id: '-1' })
+    }
+  },
+
+  async midiOpen() {
+    await midi.initInput(this.selectedMidiDeviceId)
+    Alpine.store('midiDeviceName', midi.getActiveDeviceName())
+    this.$refs.midiDialog.close()
+  },
+
+  fullscreen() {
+    if (this.isFullscreen) {
+      document.exitFullscreen()
+      this.isFullscreen = false
+      return
+    }
+
+    this.$refs.output.requestFullscreen()
+    this.isFullscreen = true
     setTimeout(() => {
       resize()
       resizeEditor()
     }, 200)
-  })
+  },
 
-  onClick('#audio', async () => {
-    hideError()
-
-    const devices = await audio.listInputDevices()
-    if (devices === null) {
-      disable('#audio-devices')
-      $('#audio-devices').innerHTML = '<option>Input audio access denied</option>'
-    } else {
-      $('#audio-devices').innerHTML = '<option value="none">--- Select Device ---</option>'
-      const activeDevice = audio.getActiveDevice()
-
-      if (activeDevice) {
-        enable('#audio-in-close')
-      }
-
-      for (const device of devices) {
-        const option = document.createElement('option')
-        option.text = device.label
-        option.value = device.deviceId
-
-        if (activeDevice && activeDevice.deviceId === device.deviceId) {
-          option.selected = true
-          disable('#audio-in-open')
-        }
-
-        $('#audio-devices').add(option)
-      }
-
-      onClick('#audio-in-open', async () => {
-        const device = devices.find((d) => d.deviceId === $('#audio-devices').value)
-
-        const smoothing = floatValue('#audio-smoothing')
-        const gain = floatValue('#audio-gain')
-        const output = $('#audio-output').checked
-
-        await audio.initInput(device, output, smoothing, gain)
-        deviceUpdate()
-        closeDialog('#audio-dialog')
-      })
-    }
-
-    showDialog('#audio-dialog')
-  })
-
-  onChange('#audio-devices', (e) => {
-    if (e.target.selectedIndex === 0) {
-      disable('#audio-in-open')
-    } else {
-      enable('#audio-in-open')
-    }
-  })
-
-  onClick('#audio-in-close', async () => {
-    audio.stopInput()
-    closeDialog('#audio-dialog')
-    disable('#audio-in-close')
-    disable('#audio-in-open')
-  })
-
-  onClick('#toggle', () => {
-    const codeEl = $('#code')
-    if (codeEl.style.display === 'none') {
-      codeEl.style.display = 'block'
-      $('#output-wrap').style.height = `${window.innerHeight - window.innerHeight / 2.6}px`
-      resize()
-      resizeEditor()
-    } else {
-      codeEl.style.display = 'none'
-      $('#output-wrap').style.height = `${window.innerHeight - 60}px`
-      resize()
-    }
-  })
-
-  onFullscreenChange('#output', () => {
+  toggleCode() {
+    this.showCode = !this.showCode
+    this.$refs.outputWrap.style.height = this.showCode ? `${window.innerHeight - window.innerHeight / 2.6}px` : `${window.innerHeight - 60}px`
     resize()
     resizeEditor()
-  })
+  },
 
-  window.addEventListener('resize', () => {
-    resize()
-    resizeEditor()
-  })
+  pauseOrResume,
+  execPressed,
+  rewind,
+  videoCapture,
+}))
 
-  new MutationObserver(() => {
-    resize()
-    resizeEditor()
-  }).observe($('#output-wrap'), { attributes: true })
-
-  onClick('#load-cancel', () => {
-    closeDialog('#file-dialog')
-  })
-
-  onClick('#audio-cancel', () => {
-    closeDialog('#audio-dialog')
-  })
-
-  // A file loader, fetches file from the public/samples folder
-  $$('.file').forEach((fileEl) => {
-    fileEl.addEventListener('click', async () => {
-      try {
-        const code = await loadExample(fileEl.dataset.file)
-        editor.setValue(code)
-        closeDialog('#file-dialog')
-        rewind()
-        execPressed()
-      } catch (err) {
-        closeDialog('#file-dialog')
-        showError(err.message)
-      }
-    })
-  })
-
-  // Spacebar to pause or resume
-  onKeyDownCode('#output', 'Space', pauseOrResume)
-
-  // Fullscreen mode when double clicking
-  $('#output').ondblclick = function () {
-    if (document.fullscreenElement) {
-      document.exitFullscreen()
-    } else {
-      $('#output').requestFullscreen()
-    }
-  }
-
-  // Capture double tap on mobile
-  let lastTap = 0
-  window.ontouchend = function (event) {
-    const currentTime = new Date().getTime()
-    const tapLength = currentTime - lastTap
-    if (tapLength < 500 && tapLength > 0) {
-      if (document.fullscreenElement) {
-        document.exitFullscreen()
-      } else {
-        $('#output').requestFullscreen()
-      }
-      event.preventDefault()
-    }
-    lastTap = currentTime
-  }
-
-  onClick('#midi', async () => {
-    hideError()
-
-    const devices = await midi.listInputDevices()
-    if (devices === null) {
-      disable('#midi-devices')
-      $('#midi-devices').innerHTML = '<option>MIDI access denied</option>'
-    } else {
-      $('#midi-devices').innerHTML = '<option value="none">--- Select Device ---</option>'
-      const activeDeviceId = midi.getActiveDeviceId()
-
-      showDialog('#midi-dialog')
-
-      for (const device of devices) {
-        const option = document.createElement('option')
-        option.text = device.name
-        option.value = device.id
-
-        if (activeDeviceId && activeDeviceId === device.id) {
-          option.selected = true
-          disable('#midi-in-open')
-        }
-
-        $('#midi-devices').add(option)
-      }
-
-      onClick('#midi-in-open', async () => {
-        const deviceId = $('#midi-devices').value
-        await midi.initInput(deviceId)
-        deviceUpdate()
-        closeDialog('#midi-dialog')
-      })
-    }
-  })
-
-  onChange('#midi-devices', (e) => {
-    if (e.target.selectedIndex === 0) {
-      disable('#midi-in-open')
-    } else {
-      enable('#midi-in-open')
-    }
-  })
-
-  onClick('#midi-cancel', () => {
-    closeDialog('#midi-dialog')
-  })
-
-  onClick('#rec', async () => {
-    const started = videoCapture($('#output'))
-    if (started) {
-      $('#rec').classList.add('recording')
-    } else {
-      $('#rec').classList.remove('recording')
-    }
-  })
-
-  // get 'f' from the URL query string to force load a file
-  const urlParams = new URLSearchParams(window.location.search)
-  const fileLoad = urlParams.get('f')
-
-  if (fileLoad) {
-    window.history.replaceState({}, document.title, window.location.pathname)
-  }
-
-  // Initialise the Monaco text editor, and then run the shader when it's ready
-  initEditor(execPressed, fileLoad)
-})
+Alpine.start()

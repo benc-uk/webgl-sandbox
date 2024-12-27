@@ -3,10 +3,10 @@
 // ===============================================================================
 
 /**
- * @param {string} name - The name of the shader file to load without the extension
+ * @param {string} name - The name of the example shader file to load without the extension
  * @returns {Promise<string>}
  */
-export async function loadExample(name) {
+export async function loadExampleCode(name) {
   const resp = await fetch(`samples/${name}.glsl.frag`)
   if (!resp.ok || resp.status !== 200) {
     throw new Error(`Failed to load shader file: ${name}`)

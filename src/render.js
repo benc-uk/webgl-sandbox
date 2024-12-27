@@ -13,7 +13,7 @@ import { getShaderCode } from './storage.js'
 import { ANALYSER_BUFFER_SIZE, getAnalyser } from './audio.js'
 import { getTexture } from './midi.js'
 import * as rand from './rand-noise.js'
-import { hideError, renderUpdate, showError, statusUpdate } from './events.js'
+import Alpine from 'alpinejs'
 
 let looping = false
 let paused = false
@@ -27,7 +27,7 @@ export function execPressed() {
   looping = false
 
   // Resize everything here, only place it really works
-  hideError()
+  Alpine.store('error', '')
   resize()
   resizeEditor()
 
@@ -36,7 +36,7 @@ export function execPressed() {
   setTimeout(() => {
     const code = getShaderCode().trim()
     if (!code || code.length === 0) {
-      showError("No shader code! That's not going to work...")
+      Alpine.store('error', "No shader code! That's not going to work...")
       return
     }
 
@@ -74,7 +74,7 @@ function execShader(shaderCode) {
       }
     }
 
-    showError(niceErr)
+    Alpine.store('error', niceErr)
 
     console.error('💥 Failed to compile shader!')
     console.error(errMessage)
@@ -97,7 +97,7 @@ function execShader(shaderCode) {
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, quadArray)
   twgl.setBuffersAndAttributes(gl, progInfo, bufferInfo)
 
-  statusUpdate(paused, stream)
+  statusUpdate()
 
   /**
    * Inner function to render the shader
@@ -149,7 +149,8 @@ function execShader(shaderCode) {
 
     // Update status every 150ms
     if (time % 150 < 30) {
-      renderUpdate(fps, elapsedTime)
+      Alpine.store('fps', fps.toFixed(1))
+      Alpine.store('elapsedTime', elapsedTime.toFixed(1))
     }
 
     // Loop and update the time
@@ -160,7 +161,6 @@ function execShader(shaderCode) {
   // It's all about this one line of code
   console.log('🚀 Starting render loop')
   looping = true
-  renderUpdate(fps, elapsedTime)
   requestAnimationFrame(render)
 }
 
@@ -181,7 +181,6 @@ export function videoCapture(outputEl) {
   if (stream) {
     console.log('📽️ Stopping video capture')
     mediaRecorder.stop()
-    return false
   }
 
   stream = outputEl.captureStream(60)
@@ -205,10 +204,22 @@ export function videoCapture(outputEl) {
     link.click()
     link.remove()
     stream = null
+    Alpine.store('recording', false)
   }
 
   console.log('📽️ Starting video capture')
   mediaRecorder.start()
 
-  return true
+  Alpine.store('recording', true)
+}
+
+function statusUpdate() {
+  let status = paused ? 'Paused' : 'Running'
+
+  if (stream) {
+    status = 'Capturing video...'
+  }
+
+  Alpine.store('status', status)
+  Alpine.store('paused', paused)
 }

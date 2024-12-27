@@ -20,6 +20,10 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+[x-cloak] {
+  display: none !important;
+}
+
 hr {
   border: 2px solid var(--secondary);
 }
@@ -130,13 +134,13 @@ dialog::backdrop {
   padding: 5px;
   align-items: center;
 }
+
 #toolbar button {
   width: 45px;
 }
 
-#error {
+.error {
   position: absolute;
-  display: none;
   top: 10%;
   left: 50%;
   transform: translateX(-50%);
@@ -214,6 +218,7 @@ li:hover {
   font-size: 0.95rem;
   color: var(--lighter);
   margin-left: 0.5rem;
+  font-weight: 700;
 }
 
 a {
@@ -264,4 +269,10 @@ a:visited {
   &::before {
     content: '💀';
   }
+}
+
+p {
+  margin: 0;
+  padding: 0;
+  display: inline;
 }

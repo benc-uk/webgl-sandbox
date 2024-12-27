@@ -20,6 +20,8 @@ const midiData = new Uint8Array(NOTES * CHANNELS * 4)
  * @param {string} deviceId
  */
 export async function initInput(deviceId) {
+  console.log('🥁 Opening MIDI device:', deviceId)
+
   const device = midi.getInputDevice(deviceId)
   if (!device) {
     return

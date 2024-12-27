@@ -1,7 +1,7 @@
 {
   "name": "webgl-shader-playground",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.0.5-update-01",
   "type": "module",
   "author": "Ben Coleman",
   "license": "MIT",
@@ -22,6 +22,7 @@
     "vite-plugin-package-version": "^1.1.0"
   },
   "dependencies": {
+    "alpinejs": "^3.14.8",
     "simplex-noise": "^4.0.3"
   }
 }
