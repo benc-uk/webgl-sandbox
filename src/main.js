@@ -22,7 +22,6 @@ Alpine.data('app', () => ({
   isFullscreen: false,
 
   audioDevices: [],
-  activeAudioDevice: null,
   selectedAudioDeviceId: '-1',
   disableAudioSelect: false,
   audioSmoothing: 0.5,
@@ -38,9 +37,10 @@ Alpine.data('app', () => ({
     { title: 'Acid trip', name: 'acid' },
     { title: 'Colour Wave', name: 'colours' },
     { title: 'Raytracer', name: 'raytracer' },
-    { title: 'Scrap', name: 'test' },
+    { title: 'Scrap', name: 'scrap' },
     { title: 'Spectrum analyser', name: 'analyser' },
     { title: 'Circles analyser', name: 'circles-analyser' },
+    { title: 'MIDI debug', name: 'midi-debug' },
   ],
 
   init() {
@@ -95,42 +95,37 @@ Alpine.data('app', () => ({
 
     this.audioDisabled = false
     this.audioDevices = await audio.listInputDevices()
-    this.activeAudioDevice = null
+
     if (this.audioDevices === null) {
       // If access is denied, we get null back so put a dummy device in the list
       this.audioDevices = [{ label: 'Input audio access denied', deviceId: '-1' }]
       this.disableAudioSelect = true
     } else {
       this.disableAudioSelect = false
-      this.audioDevices.unshift({ label: '--- Select Devices ---', deviceId: '-1' })
-      this.activeAudioDevice = audio.getActiveDevice()
+      this.audioDevices.unshift({ label: '--- Select Device ---', deviceId: '-1' })
+      const activeAudioDevice = audio.getActiveDevice()
 
       // Disable the select dropdown if we have an active device
-      if (this.activeAudioDevice) {
-        this.audioDevices = [this.activeAudioDevice]
+      if (activeAudioDevice) {
+        this.audioDevices = [activeAudioDevice]
         this.disableAudioSelect = true
       }
     }
   },
 
-  audioOpenButDisable() {
-    if (this.activeAudioDevice) return true
-    if (this.selectedAudioDeviceId === '-1') return true
-    return false
-  },
-
   async audioOpen() {
+    this.$refs.audioDialog.close()
     const device = this.audioDevices.find((d) => d.deviceId === this.selectedAudioDeviceId)
 
     Alpine.store('audioDeviceName', device.label)
     await audio.initInput(device, this.audioOutput, this.audioSmoothing, this.audioGain)
-    this.$refs.audioDialog.close()
   },
 
-  async audioClose() {
+  audioClose() {
     audio.stopInput()
     Alpine.store('audioDeviceName', '')
     this.selectedAudioDeviceId = '-1'
+
     this.$refs.audioDialog.close()
   },
 
@@ -149,6 +144,13 @@ Alpine.data('app', () => ({
   async midiOpen() {
     await midi.initInput(this.selectedMidiDeviceId)
     Alpine.store('midiDeviceName', midi.getActiveDeviceName())
+    this.$refs.midiDialog.close()
+  },
+
+  async midiClose() {
+    midi.stopInput()
+    Alpine.store('midiDeviceName', '')
+    this.selectedMidiDeviceId = '-1'
     this.$refs.midiDialog.close()
   },
 

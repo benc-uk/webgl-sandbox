@@ -32,6 +32,20 @@ export async function initInput(deviceId) {
   device.addEventListener('midimessage', messageHandler)
 }
 
+export function stopInput() {
+  if (!activeDeviceId) {
+    return
+  }
+
+  const device = midi.getInputDevice(activeDeviceId)
+  if (!device) {
+    return
+  }
+
+  device.removeEventListener('midimessage', messageHandler)
+  activeDeviceId = null
+}
+
 /**
  * Handle MIDI messages
  * @param {MIDIMessageEvent} rawMidiMsg
@@ -39,6 +53,7 @@ export async function initInput(deviceId) {
  */
 function messageHandler(rawMidiMsg) {
   const msg = midi.decodeMessage(rawMidiMsg)
+  //console.log('🥁 MIDI message:', msg)
 
   // Need to store in 1D array for GLSL
   const offset = msg.channel * NOTES * 4 + msg.data1 * 4
@@ -47,12 +62,16 @@ function messageHandler(rawMidiMsg) {
   if (msg.type === 'Note on' || msg.type === 'Note off') {
     // Need to double the value from 0-127 to 0-255
     let velo = msg.data2 * 2
+    console.log('🥁 MIDI message:', msg.data1, msg.channel)
+
     if (msg.type === 'Note off') {
       velo = 0
     }
 
     // Red
     midiData[offset + 0] = velo
+
+    //console.log(midiData[offset + 0])
   }
 
   // Control change messages go in the green channel

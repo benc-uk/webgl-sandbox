@@ -95,8 +95,15 @@ vec3 hsv2rgb(float h, float s, float v)
 float audioFreqData(int binIndex) {
 
 // MIDI functions
+
+// Get velocity (scaled to 0-1) note value of given note & channel
 float midiNote(int chan, int note)
+
+// Get CC value (scaled to 0-1) of given CC number & channel
 float midiCC(int chan, int cc)
+
+// Get highest note (scaled to 0-1) played on given channel
+midiNoteAny(int chan)
 
 // Random and noise functions
 float goldNoise(in vec2 xy, in float seed)

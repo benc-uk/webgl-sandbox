@@ -81,6 +81,15 @@ float midiNote(int chan, int note) {
   return texture(u_midi_tex, m).r;
 }
 
+float midiNoteAny(int chan) {
+  // Warning here be loops & conditionals, not shader friendly
+  for (int i = 127; i >= 0; i--) {
+    if (midiNote(chan, i) > 0.0) {
+      return float(i);
+    }
+  }
+}
+
 float midiCC(int chan, int cc) {
   vec2 m = vec2(float(cc)/128.0, float(chan-1)/16.0);
   return texture(u_midi_tex, m).g;

@@ -271,8 +271,8 @@ a:visited {
   }
 }
 
-p {
-  margin: 0;
-  padding: 0;
-  display: inline;
+.active {
+  color: limegreen;
+  background-color: var(--nearblack);
+  border-color: forestgreen;
 }

@@ -17,6 +17,7 @@
   <!-- Dialog box for loading example shaders -->
   <dialog x-ref="fileDialog">
     <h3>Load example shader</h3>
+    <hr>
     <ul>
       <template x-for="file in samples">
         <li @click="loadSample(file.name)" x-text="file.title"></li>
@@ -34,7 +35,7 @@
         <option :value="device.deviceId" x-text="device.label"></option>
       </template>
     </select>
-    <div class="mt-1" x-cloak x-show="!audioOpenButDisable()">
+    <div class="mt-1" x-cloak x-show="selectedAudioDeviceId !== '-1' && !$store.audioDeviceName">
       <label class="fw-label" for="audio-output">Enable output</label>
       <input type="checkbox" x-model="audioOutput"><br>
 
@@ -44,8 +45,11 @@
       <label class="fw-label" for="audio-gain">Input gain</label>
       <input type="range" x-model="audioGain" min="0" max="10.0" step="0.05" value="1.0">
     </div>
-    <button @click="audioOpen" class="btn-small mt-1" :disabled="audioOpenButDisable">OPEN</button>
-    <button @click="audioClose" class="btn-small" :disabled="!activeAudioDevice">CLOSE</button>
+    <button @click="audioOpen" class="btn-small mt-1" x-show="!$store.audioDeviceName"
+      :disabled="selectedAudioDeviceId === '-1'">
+      OPEN DEVICE
+    </button>
+    <button @click="audioClose" class="btn-small" x-show="$store.audioDeviceName">STOP AUDIO</button>
 
     <hr class="mt-1">
 
@@ -63,7 +67,8 @@
         <option :value="device.id" x-text="device.name"></option>
       </template>
     </select>
-    <button @click="midiOpen" class="btn-small" :disabled="selectedMidiDeviceId == '-1'">OPEN</button>
+    <button @click="midiOpen" class="btn-small" :disabled="selectedMidiDeviceId == '-1'">OPEN DEVICE</button>
+    <button @click="midiClose" class="btn-small" :disabled="!$store.midiDeviceName">STOP MIDI</button>
     <hr>
     <div class="flex center">
       <button @click="$refs.midiDialog.close()" class="btn-small">CANCEL</button>
@@ -81,19 +86,35 @@
 
   <!-- Toolbar area -->
   <div id="toolbar" class="flex">
-    <button @click="execPressed" title="Execute and run code"><i class="fa-fw fa-solid fa-flag-checkered"></i></button>
-    <button @click="pauseOrResume" title="Pause/Run" :class="$store.paused ? 'fa-play' : 'fa-pause'"><i
-        class="fa-fw fa-solid"></i></button>
-    <button @click="rewind" title="Rewind time to start"><i class="fa-fw  fa-solid fa-backward-step"></i></button>
+    <button @click="execPressed" title="Execute and run code">
+      <i class="fa-fw fa-solid fa-flag-checkered"></i>
+    </button>
+    <button @click="pauseOrResume" title="Pause/Run" :class="$store.paused ? 'fa-play' : 'fa-pause'">
+      <i class="fa-fw fa-solid"></i>
+    </button>
+    <button @click="rewind" title="Rewind time to start">
+      <i class="fa-fw  fa-solid fa-backward-step"></i>
+    </button>
     &nbsp;&nbsp;
-    <button @click="loadClicked" title="Load example file"><i class="fa-fw fa-solid fa-folder"></i></button>
-    <button @click="showAudioDialog" title="Configure audio"><i class="fa-solid fa-volume-high"></i></i></button>
-    <button @click="showMIDIDialog" title="Configure MIDI"><i class="fa-fw fa-solid fa-music"></i></button>
+    <button @click="loadClicked" title="Load example file">
+      <i class="fa-fw fa-solid fa-folder"></i>
+    </button>
+    <button @click="showAudioDialog" title="Configure audio" :class="$store.audioDeviceName ? 'active':''">
+      <i class="fa-solid fa-volume-high"></i>
+    </button>
+    <button @click="showMIDIDialog" title="Configure MIDI" :class="$store.midiDeviceName ? 'active':''">
+      <i class=" fa-fw fa-solid fa-music"></i>
+    </button>
     &nbsp;&nbsp;
-    <button @click="fullscreen" title="Go fullscreen"><i class="fa-fw fa-solid fa-expand"></i></button>
-    <button @click="toggleCode" title="Toggle editor visible"><i class="fa-fw fa-solid fa-code"></i></button>
-    <button @click="videoCapture($refs.output)" :class="$store.recording ? 'recording' : ''" title="Capture video"><i
-        class="fa-fw fa-solid fa-video"></i></button>
+    <button @click="fullscreen" title="Go fullscreen">
+      <i class="fa-fw fa-solid fa-expand"></i>
+    </button>
+    <button @click="toggleCode" title="Toggle editor visible">
+      <i class="fa-fw fa-solid fa-code"></i>
+    </button>
+    <button @click="videoCapture($refs.output)" :class="$store.recording ? 'recording' : ''" title="Capture video">
+      <i class="fa-fw fa-solid fa-video"></i>
+    </button>
 
     <!-- Realtime status info FPS & time -->
     <div class="status">
