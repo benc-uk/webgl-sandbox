@@ -10,7 +10,8 @@ uniform vec2 u_resolution;
 uniform float u_time;
 uniform float u_delta;
 uniform float u_aspect;
-uniform int u_analyser[512];
+uniform int u_analyser[{{ ANALYSER_BINS }}];
+const int u_analyser_size = {{ ANALYSER_BINS }};
 uniform sampler2D u_rand_tex; // Texture holding random values 256x256
 uniform sampler2D u_midi_tex; // Texture holding 16x128 MIDI data
 uniform sampler2D u_noise_tex; // Texture holding simplex noise values 256x256

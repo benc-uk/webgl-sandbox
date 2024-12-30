@@ -2,18 +2,19 @@
 // Main app function to run the GL shader
 // ===============================================================================
 
-import { getGl, resize } from '../lib/gl.js'
-import { addErrorLine, clearErrors, resizeEditor, selector } from './editor.js'
-
 import * as twgl from 'twgl.js'
+import Handlebars from 'handlebars'
+import Alpine from 'alpinejs'
 
 import vertShader from './shaders/base.glsl.vert?raw'
 import boilerPlate from './shaders/boilerplate.glsl?raw'
+import { getGl, resize } from '../lib/gl.js'
+import { addErrorLine, clearErrors, resizeEditor, selector } from './editor.js'
 import { getShaderCode } from './storage.js'
-import { ANALYSER_BUFFER_SIZE, getAnalyser } from './audio.js'
+import { getAnalyser } from './audio.js'
 import { getTexture } from './midi.js'
 import * as rand from './rand-noise.js'
-import Alpine from 'alpinejs'
+import { cfg } from './config.js'
 
 let looping = false
 let paused = false
@@ -55,8 +56,11 @@ function execShader(shaderCode) {
 
   clearErrors()
 
+  const ANALYSER_BINS = cfg().ANALYSER_FFT_SIZE / 2
+  const template = Handlebars.compile(boilerPlate)
+
   // Add extra & boilerplate code to the fragment shader
-  shaderCode = boilerPlate + shaderCode
+  shaderCode = template({ ANALYSER_BINS }) + shaderCode
 
   // Count the number of lines in the boilerplate
   const boilerplateLines = boilerPlate.split('\n').length - 1
@@ -107,7 +111,7 @@ function execShader(shaderCode) {
     fps = 1000 / (time - lastTime)
 
     // Audio and frequency data
-    const dataArray = new Uint8Array(ANALYSER_BUFFER_SIZE)
+    const dataArray = new Uint8Array(ANALYSER_BINS)
     const analyser = getAnalyser()
     if (analyser) {
       analyser.getByteFrequencyData(dataArray)

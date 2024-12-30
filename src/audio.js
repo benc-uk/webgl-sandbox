@@ -2,6 +2,8 @@
 // Input audio processing and spectrum analysis
 // ===============================================================================
 
+import { cfg } from './config'
+
 let ctx
 
 /** @type {MediaStreamAudioSourceNode} */
@@ -12,10 +14,6 @@ let analyser
 
 /** @type {MediaDeviceInfo} */
 let activeDevice
-
-// Warning changing this value will require changing the shader boilerplate
-export const ANALYSER_BUFFER_SIZE = 512
-const FFT_SIZE = 1024
 
 /**
  * Initialize the audio input
@@ -53,6 +51,8 @@ export async function initInput(device, output = false, smoothing = 0.5, gain = 
     },
   })
 
+  console.log('🎛️ Created stream for input device:', device.label)
+
   // Create an audio source from the device media stream
   inputSource = ctx.createMediaStreamSource(stream)
 
@@ -61,8 +61,10 @@ export async function initInput(device, output = false, smoothing = 0.5, gain = 
 
   // Create an analyser node
   analyser = ctx.createAnalyser()
-  analyser.fftSize = FFT_SIZE
+  analyser.fftSize = cfg().ANALYSER_FFT_SIZE
   analyser.smoothingTimeConstant = smoothing
+
+  console.log('🔬 Analyser created with FFT size', analyser.fftSize)
 
   // Connect the source to the analyser
   inputSource.connect(gainNode)

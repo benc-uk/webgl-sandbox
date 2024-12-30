@@ -10,10 +10,11 @@ import Alpine from 'alpinejs'
 import * as audio from './audio.js'
 import * as midi from './midi.js'
 
-import { getGl, resize } from '../lib/gl.js'
+import { getGl, resize as resizeGL } from '../lib/gl.js'
 import { execPressed, pauseOrResume, rewind, videoCapture } from './render.js'
 import { editor, initEditor, resizeEditor, selector } from './editor.js'
 import { loadExampleCode } from './storage.js'
+import { cfg } from './config.js'
 
 Alpine.data('app', () => ({
   version: `v${import.meta.env.PACKAGE_VERSION}`,
@@ -43,6 +44,8 @@ Alpine.data('app', () => ({
     { title: 'MIDI debug', name: 'midi-debug' },
   ],
 
+  config: cfg(),
+
   init() {
     console.log('🚦 Initialising...')
     getGl(selector) // We call this early to make sure we have a GL context, but we don't need it yet
@@ -60,19 +63,27 @@ Alpine.data('app', () => ({
 
     Alpine.store('error', '')
 
+    // Watch for resizing of the window
     window.addEventListener('resize', () => {
-      resize()
+      resizeGL()
       resizeEditor()
     })
 
+    // Watch for resizing of the output wrapper div (it has a resize handle)
     new MutationObserver(() => {
-      resize()
+      resizeGL()
       resizeEditor()
-    }).observe(this.$refs.outputWrap, { attributes: true })
+    }).observe(this.$refs.outputWrap, { attributeFilter: ['style'] })
+
+    // Add a listener for all dialogs when they open to clear the error message
+    document.querySelectorAll('dialog').forEach((dialog) => {
+      new MutationObserver(() => {
+        Alpine.store('error', '')
+      }).observe(dialog, { attributeFilter: ['open'] })
+    })
   },
 
   loadClicked() {
-    Alpine.store('error', '')
     this.$refs.fileDialog.showModal()
   },
 
@@ -90,7 +101,6 @@ Alpine.data('app', () => ({
   },
 
   async showAudioDialog() {
-    Alpine.store('error', '')
     this.$refs.audioDialog.showModal()
 
     this.audioDisabled = false
@@ -130,7 +140,6 @@ Alpine.data('app', () => ({
   },
 
   async showMIDIDialog() {
-    Alpine.store('error', '')
     this.$refs.midiDialog.showModal()
 
     this.midiDevices = await midi.listInputDevices()
@@ -164,7 +173,7 @@ Alpine.data('app', () => ({
     this.$refs.output.requestFullscreen()
     this.isFullscreen = true
     setTimeout(() => {
-      resize()
+      resizeGL()
       resizeEditor()
     }, 200)
   },
@@ -172,7 +181,7 @@ Alpine.data('app', () => ({
   toggleCode() {
     this.showCode = !this.showCode
     this.$refs.outputWrap.style.height = this.showCode ? `${window.innerHeight - window.innerHeight / 2.6}px` : `${window.innerHeight - 60}px`
-    resize()
+    resizeGL()
     resizeEditor()
   },
 
