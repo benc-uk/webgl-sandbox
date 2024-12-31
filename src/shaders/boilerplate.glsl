@@ -10,6 +10,7 @@ uniform vec2 u_resolution;
 uniform float u_time;
 uniform float u_delta;
 uniform float u_aspect;
+uniform vec3 u_mouse;
 uniform int u_analyser[{{ ANALYSER_BINS }}];
 const int u_analyser_size = {{ ANALYSER_BINS }};
 uniform sampler2D u_rand_tex; // Texture holding random values 256x256

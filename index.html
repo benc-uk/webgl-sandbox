@@ -75,14 +75,13 @@
     </div>
   </dialog>
 
-
   <!-- Error message -->
   <div class="error" x-cloak x-show="$store.error" x-text="$store.error"></div>
 
   <!-- Main WebGL output canvas -->
   <div x-ref="outputWrap" id="output-wrap">
     <canvas id="output" x-ref="output" width="800" height="400" @dblclick="fullscreen" @keydown.space="pauseOrResume"
-      tabindex="-1"></canvas>
+      @mousemove="mouseMove" @mousedown="mouseMove" tabindex="-1"></canvas>
   </div>
 
   <!-- Toolbar area -->

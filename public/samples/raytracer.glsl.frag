@@ -19,7 +19,6 @@ float sphereHit(vec3 ro, vec3 rd, Sphere sph) {
 }
 
 // Some global variables
-vec3 lightPos = vec3(14.0, 8.0, 17.0);
 vec3 bgColor = vec3(0.6, 0.9, 0.9);
 float ambient = 0.06;
 
@@ -27,6 +26,10 @@ const int numSpheres = 3;
 Sphere scene[numSpheres]; // The scene is composed of array of spheres
 
 void main() {
+  // Light position based on mouse
+  vec2 mouse = vec2(u_mouse.x - u_resolution.x/2.0, -u_mouse.y + u_resolution.y/2.0);
+  vec3 lightPos = vec3(mouse * 0.15, 17.0);
+
   int hitIndex = -1; // Negative means no hit
 
   // Unable to move this outside of main() for weird GLSL reasons

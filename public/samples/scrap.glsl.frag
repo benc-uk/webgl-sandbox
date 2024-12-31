@@ -1,29 +1,20 @@
-void main(){
-  vec2 sp = screenPos(0.0);
-  sp *= 0.1;
+const float size = 20.0;
 
-  float off = u_time * 0.002;
-  float offy = u_time * 0.003;
+void main() {
+  vec2 mouseBox = vec2(0.0, 0.0);
+  float mouseY = u_resolution.y - u_mouse.y;
+  float mouseX = u_mouse.x;
+  float mouseBut = u_mouse.z/4.0; 
 
-  sp += vec2(off, offy);
-  float noise1 = texture(u_noise_tex, vec2(sp.x, sp.y)).r;
-  float noise2 = texture(u_noise_tex, vec2(sp.x*0.5, sp.y*0.5)).r;
-  float noise3 = texture(u_noise_tex, vec2(sp.x*0.25, sp.y*0.25)).r;
-  float noise4 = texture(u_noise_tex, vec2(sp.x*0.1, sp.y*0.1)).r;
+  // Create a box around the mouse position using gl_FragCoord
+  if (mouseX > gl_FragCoord.x && mouseX < gl_FragCoord.x + size && mouseY > gl_FragCoord.y && mouseY < gl_FragCoord.y + size) {
+    mouseBox = vec2(1.0);
+  }
 
-  float noise = (noise1 + noise2 + noise3 + noise4) / 5.0;
+  // Colorize the box area
+  vec3 color = vec3(0.0, 0.0, 0.0);
+  color += mouseBox.x * mouseBox.y * vec3(mouseBut, 0.0, 0.6);
 
-  // convert noise to a color
-
-  float tt = (sin(u_time*0.9) * 0.5) + 0.5;
-  float t = tt*0.3+0.3;
-  float w = (tt*0.15)+0.3;
-  float h = (tt*0.5)+0.5;
-  float hue = step(noise, w) * t;
-  
-  // convert hsv to rgb
-  vec3 color = hsv2rgb(hue, h, 0.8);
-
-  // output the color
+  // Output to screen
   fragColor = vec4(color, 1.0);
 }

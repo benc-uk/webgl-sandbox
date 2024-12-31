@@ -62,6 +62,8 @@ Alpine.data('app', () => ({
     initEditor(execPressed, fileLoad)
 
     Alpine.store('error', '')
+    Alpine.store('mouseX', this.$refs.outputWrap.clientWidth / 1.7)
+    Alpine.store('mouseY', this.$refs.outputWrap.clientHeight / 3)
 
     // Watch for resizing of the window
     window.addEventListener('resize', () => {
@@ -183,6 +185,15 @@ Alpine.data('app', () => ({
     this.$refs.outputWrap.style.height = this.showCode ? `${window.innerHeight - window.innerHeight / 2.6}px` : `${window.innerHeight - 60}px`
     resizeGL()
     resizeEditor()
+  },
+
+  mouseMove(evt) {
+    Alpine.store('mouseBut', evt.buttons)
+
+    if (evt.buttons <= 0) return
+
+    Alpine.store('mouseX', evt.clientX)
+    Alpine.store('mouseY', evt.clientY)
   },
 
   pauseOrResume,

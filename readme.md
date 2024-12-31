@@ -9,12 +9,14 @@ Features:
 - Interactive code editor with syntax highlighting using [Monaco editor](https://microsoft.github.io/monaco-editor/)
 - Updates to shaders apply without interrupting rendering
 - Shader compilation error highlighting
-- A set of samples/examples to get you started (see below)
-- Audio input support and spectrum analyser
-- MIDI support
-- Video capture
+- A set of samples/examples to get you started
+- Audio input support with spectrum analyser
+- MIDI support, with notes and CC values
+- Capture output video as MP4
+- Simplex noise and random numbers
+- Mouse input
 
-![](./etc/screencap.png)
+![](./etc/chrome_3PK9kfmxm8.png)
 
 ## 🌐 Try it Out
 
@@ -46,7 +48,7 @@ The shader code you need to provide is a GLSL fragment shader, it needs to have 
 
 You are not working with any sort of 3D geometry or attribute buffers, the fragment shader runs over a 2D quad which covers the screen and output frame.
 
-The only defined output is `fragColor` which is a vec4 for the colour of the output pixel
+The only output is `fragColor` which is a vec4, to hold the colour of the output pixel.
 
 Simplest example
 
@@ -57,21 +59,26 @@ void main() {
 }
 ```
 
+Press Ctrl+S to save and run the shader code and see your changes, or click the flag icon.
+
 ### Builtin Uniforms
 
 There are several builtin uniforms provided and set automatically
 
 ```glsl
-vec2 u_resolution;    // Resolution of the output
-float u_time;         // Current time in seconds, advances every frame
-float u_delta;        // Time delta, usually constant
-float u_aspect;       // Aspect ration of the output
-int u_analyser[512];  // Audio frequency data from spectrum analyser
+vec2 u_resolution       // Resolution of the output
+float u_time            // Current time in seconds, advances every frame
+float u_delta           // Time delta, usually constant
+float u_aspect          // Aspect ration of the output
+vec3 u_mouse            // Mouse coords in x & y, z holds mouse buttons
 
-sampler2D u_rand_tex;   // Texture holding random values in R,G,B & A 256x256
-sampler2D u_noise_tex;  // Texture holding simplex noise 256x256
-sampler2D u_midi_tex;   // Texture holding 16x128 MIDI note & CC data
-sampler3D u_noise_tex3; // Texture holding 3D simplex noise values
+int u_analyser[]        // Audio frequency data from spectrum analyser
+int u_analyser_size     // Size of the u_analyser array
+
+sampler2D u_rand_tex    // Texture holding random values in R,G,B & A 256x256
+sampler2D u_noise_tex   // Texture holding simplex noise 256x256
+sampler2D u_midi_tex    // Texture holding 16x128 MIDI note & CC data
+sampler3D u_noise_tex3  // Texture holding 3D simplex noise values
 ```
 
 ### Builtin Functions

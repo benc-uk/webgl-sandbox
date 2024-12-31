@@ -1,7 +1,7 @@
 {
   "name": "webgl-shader-playground",
   "private": true,
-  "version": "0.0.5-update-01",
+  "version": "0.0.6",
   "type": "module",
   "author": "Ben Coleman",
   "license": "MIT",

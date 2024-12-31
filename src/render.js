@@ -141,6 +141,7 @@ function execShader(shaderCode) {
       u_rand_tex: randomTex,
       u_noise_tex: noiseTex,
       u_noise_tex3: noise3Tex,
+      u_mouse: [Alpine.store('mouseX'), Alpine.store('mouseY'), Alpine.store('mouseBut')],
     }
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
