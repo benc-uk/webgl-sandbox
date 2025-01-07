@@ -89,17 +89,54 @@ function execShader(shaderCode) {
   }
 
   console.log('🚦 Shader compiled successfully!')
-  gl.useProgram(progInfo.program)
 
   // Add a single quad to be rendered across the whole frame
   const quadArray = {
     position: [-1, -1, 0, 1, -1, 0, -1, 1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0],
   }
 
+  const pass2Arrays = {
+    position: {
+      numComponents: 2,
+      data: [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1],
+    },
+    imgcoord: {
+      numComponents: 2,
+      data: [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1],
+    },
+  }
+
   const { noiseTex, randomTex, noise3Tex } = rand.createTextures(gl, twgl)
 
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, quadArray)
-  twgl.setBuffersAndAttributes(gl, progInfo, bufferInfo)
+  const pass2bufferInfo = twgl.createBufferInfoFromArrays(gl, pass2Arrays)
+
+  // Create a framebuffer to hold image for 2nd pass
+  const pass2frameBuff = twgl.createFramebufferInfo(gl, undefined, gl.canvas.width, gl.canvas.height)
+  const pass2vertShader = `#version 300 es
+    precision highp float;
+    in vec4 position;
+    in vec2 imgcoord;
+    out vec2 v_imgcoord;
+
+    void main() {
+      v_imgcoord = imgcoord;
+      gl_Position = position;
+    }
+  `
+  const pass2fragShader = `#version 300 es
+    precision highp float;
+    out vec4 fragColor;
+    in vec2 v_imgcoord;
+    uniform sampler2D image;
+
+    void main() {
+      vec3 color = texture(image, v_imgcoord).rgb;
+      fragColor = vec4(color, 1.0); 
+    }
+  `
+
+  const pass2progInfo = twgl.createProgramInfo(gl, [pass2vertShader, pass2fragShader])
 
   statusUpdate()
 
@@ -149,8 +186,21 @@ function execShader(shaderCode) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     // Draw the fullscreen quad using the shader
+    // twgl.bindFramebufferInfo(gl, pass2frameBuff)
+    gl.useProgram(progInfo.program)
+    twgl.setBuffersAndAttributes(gl, progInfo, bufferInfo)
     twgl.setUniforms(progInfo, uniforms)
     twgl.drawBufferInfo(gl, bufferInfo)
+
+    // const pass2Uniforms = {
+    //   image: pass2frameBuff.attachments[0],
+    // }
+
+    // twgl.bindFramebufferInfo(gl, null)
+    // gl.useProgram(pass2progInfo.program)
+    // twgl.setUniforms(pass2progInfo, pass2Uniforms)
+    // twgl.setBuffersAndAttributes(gl, progInfo, pass2bufferInfo)
+    // twgl.drawBufferInfo(gl, pass2bufferInfo)
 
     // Update status every 150ms
     if (time % 150 < 30) {
