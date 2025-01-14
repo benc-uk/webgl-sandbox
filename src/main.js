@@ -5,15 +5,16 @@
 import '../css/style.css'
 import '../lib/fontawesome/css/solid.css'
 import '../lib/fontawesome/css/fontawesome.css'
+import 'toastify-js/src/toastify.css'
 import Alpine from 'alpinejs'
+import Toastify from 'toastify-js'
 
 import * as audio from './audio.js'
 import * as midi from './midi.js'
 
-import { getGl, resize as resizeGL } from '../lib/gl.js'
-import { execPressed, pauseOrResume, rewind, videoCapture } from './render.js'
-import { editor, initEditor, resizeEditor, selector } from './editor.js'
-import { loadExampleCode } from './storage.js'
+import { getGl } from '../lib/gl.js'
+import { execPressed, pauseOrResume, rewind, videoCapture, resizeAll } from './render.js'
+import { loadExample, initEditor, selector, switchMode } from './editor.js'
 import { cfg } from './config.js'
 
 Alpine.data('app', () => ({
@@ -21,6 +22,7 @@ Alpine.data('app', () => ({
 
   showCode: true,
   isFullscreen: false,
+  modeShader: true,
 
   audioDevices: [],
   selectedAudioDeviceId: '-1',
@@ -67,14 +69,12 @@ Alpine.data('app', () => ({
 
     // Watch for resizing of the window
     window.addEventListener('resize', () => {
-      resizeGL()
-      resizeEditor()
+      resizeAll()
     })
 
     // Watch for resizing of the output wrapper div (it has a resize handle)
     new MutationObserver(() => {
-      resizeGL()
-      resizeEditor()
+      resizeAll()
     }).observe(this.$refs.outputWrap, { attributeFilter: ['style'] })
 
     // Add a listener for all dialogs when they open to clear the error message
@@ -93,10 +93,14 @@ Alpine.data('app', () => ({
     this.$refs.fileDialog.close()
 
     try {
-      const code = await loadExampleCode(file)
-      editor.setValue(code)
+      await loadExample(file)
       rewind()
       execPressed()
+
+      Toastify({
+        text: `Loaded sample shader: ${file}`,
+        duration: 2000,
+      }).showToast()
     } catch (err) {
       Alpine.store('error', err.message)
     }
@@ -129,11 +133,26 @@ Alpine.data('app', () => ({
     this.$refs.audioDialog.close()
     const device = this.audioDevices.find((d) => d.deviceId === this.selectedAudioDeviceId)
 
+    if (!device) {
+      return
+    }
+
     Alpine.store('audioDeviceName', device.label)
+
+    Toastify({
+      text: `Audio input started from: ${device.label}`,
+      duration: 2000,
+    }).showToast()
+
     await audio.initInput(device, this.audioOutput, this.audioSmoothing, this.audioGain)
   },
 
   audioClose() {
+    Toastify({
+      text: 'Audio input stopped',
+      duration: 2000,
+    }).showToast()
+
     audio.stopInput()
     Alpine.store('audioDeviceName', '')
     this.selectedAudioDeviceId = '-1'
@@ -159,6 +178,11 @@ Alpine.data('app', () => ({
   },
 
   async midiClose() {
+    Toastify({
+      text: 'MIDI input stopped',
+      duration: 2000,
+    }).showToast()
+
     midi.stopInput()
     Alpine.store('midiDeviceName', '')
     this.selectedMidiDeviceId = '-1'
@@ -175,16 +199,20 @@ Alpine.data('app', () => ({
     this.$refs.output.requestFullscreen()
     this.isFullscreen = true
     setTimeout(() => {
-      resizeGL()
-      resizeEditor()
+      resizeAll()
     }, 200)
   },
 
   toggleCode() {
+    Toastify({
+      text: `Code editor is ${this.showCode ? 'hidden' : 'visible'}`,
+      duration: 2000,
+    }).showToast()
+
     this.showCode = !this.showCode
     this.$refs.outputWrap.style.height = this.showCode ? `${window.innerHeight - window.innerHeight / 2.6}px` : `${window.innerHeight - 60}px`
-    resizeGL()
-    resizeEditor()
+
+    resizeAll()
   },
 
   mouseMove(evt) {
@@ -194,6 +222,16 @@ Alpine.data('app', () => ({
 
     Alpine.store('mouseX', evt.clientX)
     Alpine.store('mouseY', evt.clientY)
+  },
+
+  switchEditorMode() {
+    Toastify({
+      text: `Switched editor to ${this.modeShader ? 'post-processing' : 'shader'} mode`,
+      duration: 2000,
+    }).showToast()
+
+    switchMode()
+    this.modeShader = !this.modeShader
   },
 
   pauseOrResume,

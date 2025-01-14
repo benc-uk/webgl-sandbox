@@ -4,16 +4,21 @@
 
 const $ = document.querySelector.bind(document)
 import { execPressed } from './render.js'
-import { getShaderCode, loadExampleCode, saveShaderCode } from './storage.js'
+import defaultPostShader from './shaders/post.glsl.frag?raw'
 
 // Used everywhere, selector for the GL canvas
 export const selector = '#output'
 
-// Global reference to the Monaco editor
-export let editor
+// Local storage keys
+const KEY_SHADER_CODE = 'shaderCode'
+const KEY_POST_CODE = 'postCode'
 
-// Editor decorations for errors
+// Global reference to the Monaco editor
+let editor
 let decorations
+
+// Which mode are we in, shader or post-processing
+let modeKey = KEY_SHADER_CODE
 
 /**
  * Initialize the Monaco editor
@@ -41,12 +46,22 @@ export function initEditor(doneCallback, forceFileLoad) {
 
     let code
     if (forceFileLoad) {
-      code = await loadExampleCode(forceFileLoad)
+      code = await fetchTextFile(`samples/${forceFileLoad}.glsl.frag`)
     } else {
       code = getShaderCode()
+
+      // Load default
       if (code === null) {
-        code = await loadExampleCode('raytracer')
+        console.log('No shader code found, loading default...')
+
+        code = await fetchTextFile(`samples/raytracer.glsl.frag`)
+        localStorage.setItem(KEY_SHADER_CODE, code)
       }
+    }
+
+    // Default for post-processing code
+    if (getPostCode() === null) {
+      localStorage.setItem(KEY_POST_CODE, defaultPostShader)
     }
 
     editor = monaco.editor.create($('#code'), {
@@ -67,7 +82,7 @@ export function initEditor(doneCallback, forceFileLoad) {
     })
 
     editor.onDidChangeModelContent(() => {
-      saveShaderCode(editor.getValue())
+      localStorage.setItem(modeKey, editor.getValue())
     })
 
     decorations = editor.createDecorationsCollection()
@@ -107,4 +122,59 @@ export function resizeEditor() {
 
   $('#code').style.height = `${height}px`
   $('#code').style.width = `${width}px`
+}
+
+/**
+ * @param {string} name - The name of the example shader file to load without the extension
+ * @returns {Promise<void>}
+ */
+export async function loadExample(name) {
+  modeKey = KEY_SHADER_CODE
+  const code = await fetchTextFile(`samples/${name}.glsl.frag`)
+  localStorage.setItem('shaderCode', code)
+  editor.setValue(code)
+}
+
+/**
+ * Get the current shader code from local storage
+ * @returns {string}
+ */
+export function getShaderCode() {
+  return localStorage.getItem(KEY_SHADER_CODE)
+}
+
+/**
+ * Get the current post-processing code from local storage
+ * @returns {string}
+ */
+export function getPostCode() {
+  return localStorage.getItem(KEY_POST_CODE)
+}
+
+/**
+ * Fetch a text file from a URL
+ * @param {string} url - The URL to fetch
+ * @returns {Promise<string>}
+ */
+async function fetchTextFile(url) {
+  const resp = await fetch(url)
+  if (!resp.ok || resp.status !== 200) {
+    throw new Error(`Failed to load: ${url}`)
+  }
+
+  return await resp.text()
+}
+
+/**
+ * Switch between shader and post-processing code
+ */
+export function switchMode() {
+  modeKey = modeKey === KEY_SHADER_CODE ? KEY_POST_CODE : KEY_SHADER_CODE
+
+  clearErrors()
+  editor.setValue(localStorage.getItem(modeKey))
+}
+
+export function getMode() {
+  return modeKey
 }

@@ -89,21 +89,24 @@
     <button @click="execPressed" title="Execute and run code">
       <i class="fa-fw fa-solid fa-flag-checkered"></i>
     </button>
+    <button @click="switchEditorMode" title="Switch editor shader mode" :class="!modeShader ? 'active':''">
+      <i class="fa-fw fa-solid fa-paint-roller"></i>
+    </button>
     <button @click="pauseOrResume" title="Pause/Run" :class="$store.paused ? 'fa-play' : 'fa-pause'">
       <i class="fa-fw fa-solid"></i>
     </button>
     <button @click="rewind" title="Rewind time to start">
-      <i class="fa-fw  fa-solid fa-backward-step"></i>
+      <i class="fa-fw fa-solid fa-backward-step"></i>
     </button>
     &nbsp;&nbsp;
     <button @click="loadClicked" title="Load example file">
       <i class="fa-fw fa-solid fa-folder"></i>
     </button>
     <button @click="showAudioDialog" title="Configure audio" :class="$store.audioDeviceName ? 'active':''">
-      <i class="fa-solid fa-volume-high"></i>
+      <i class="fa-fw fa-solid fa-volume-high"></i>
     </button>
     <button @click="showMIDIDialog" title="Configure MIDI" :class="$store.midiDeviceName ? 'active':''">
-      <i class=" fa-fw fa-solid fa-music"></i>
+      <i class="fa-fw fa-solid fa-music"></i>
     </button>
     &nbsp;&nbsp;
     <button @click="fullscreen" title="Go fullscreen">

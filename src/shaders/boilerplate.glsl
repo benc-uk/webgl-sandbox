@@ -18,6 +18,10 @@ uniform sampler2D u_midi_tex; // Texture holding 16x128 MIDI data
 uniform sampler2D u_noise_tex; // Texture holding simplex noise values 256x256
 uniform sampler3D u_noise_tex3; // Texture holding simplex noise values 256x256
 
+// We share boilerplate code between shaders, so these only exist in 2nd pass shader
+in vec2 v_imgcoord;
+uniform sampler2D image;
+
 out vec4 fragColor;
 
 vec2 screenPos(float offset) {
