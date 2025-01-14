@@ -125,6 +125,8 @@ export function resizeEditor() {
 }
 
 /**
+ * Load an example shader from the samples directory
+ * Switches to shader mode
  * @param {string} name - The name of the example shader file to load without the extension
  * @returns {Promise<void>}
  */

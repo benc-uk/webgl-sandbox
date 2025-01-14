@@ -101,6 +101,8 @@ Alpine.data('app', () => ({
         text: `Loaded sample shader: ${file}`,
         duration: 2000,
       }).showToast()
+
+      this.modeShader = true
     } catch (err) {
       Alpine.store('error', err.message)
     }
