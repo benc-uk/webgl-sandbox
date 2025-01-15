@@ -15,6 +15,7 @@ Features:
 - Capture output video as MP4
 - Simplex noise and random numbers
 - Mouse input
+- Post processing shader for a 2nd pass phase
 
 ![](./etc/chrome_3PK9kfmxm8.png)
 
@@ -31,14 +32,15 @@ The toolbar is the main way to interact with the app
 ![toolbar](./etc/toolbar.png)
 
 - Execute and run the shader code, also hitting Ctrl+S in the editor will do the same
+- Switch editor to 2nd pass / post processing shader code (toggle)
 - Pause or resume the rendering loop, pressing the spacebar will do the same
 - Rewind time and restart the clock
-- Open provided sample shader, several examples are provided, and more coming
+- Open one of the provided sample and example shaders
 - Configure audio and setup incoming audio device or microphone
-- Configure MIDI input devices
-- Go fullscreen, press escape to exit. Fullscreen can also be entered with a double click or tap.
+- Configure MIDI input device
+- Switch fullscreen, press escape to exit. Fullscreen can also be entered with a double click or tap.
 - Toggle the code editor view on/off
-- Capture the output view as a video, click again to stop and save the capture as a MP4 file.
+- Capture the output view as a video, click button again to stop recording, and save the capture as a MP4 file.
 
 Any code you enter is saved locally, and will be reloaded when you re-open the page.
 
@@ -79,6 +81,15 @@ sampler2D u_rand_tex    // Texture holding random values in R,G,B & A 256x256
 sampler2D u_noise_tex   // Texture holding simplex noise 256x256
 sampler2D u_midi_tex    // Texture holding 16x128 MIDI note & CC data
 sampler3D u_noise_tex3  // Texture holding 3D simplex noise values
+```
+
+#### Uniforms for post processing shader
+
+All the uniforms above are available plus two extra ones
+
+```glsl
+sampler2D image         // Framebuffer image from the 1st pass (main shader)
+vec2 v_imgcoord         // Pixel coord into the above image
 ```
 
 ### Builtin Functions
