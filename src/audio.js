@@ -2,29 +2,33 @@
 // Input audio processing and spectrum analysis
 // ===============================================================================
 
-import { cfg } from './config'
+import { cfg } from './config.js'
 
+/** @type {AudioContext | null} */
 let ctx
 
-/** @type {MediaStreamAudioSourceNode} */
+/** @type {MediaStreamAudioSourceNode | null} */
 let inputSource
 
 /** @type {AnalyserNode} */
 let analyser
 
-/** @type {MediaDeviceInfo} */
+/** @type {MediaDeviceInfo | null} */
 let activeDevice
+
+/** @type {Uint8Array} */
+let spectrumData
 
 /**
  * Initialize the audio input
- * @param {MediaDeviceInfo} device
+ * @param {MediaDeviceInfo} deviceInfo
  * @param {boolean} output
  * @param {number} smoothing
  * @param {number} gain
  * @returns
  */
-export async function initInput(device, output = false, smoothing = 0.5, gain = 1.0) {
-  if (!device) {
+export async function initInput(deviceInfo, output = false, smoothing = 0.5, gain = 1.0) {
+  if (!deviceInfo) {
     return
   }
 
@@ -44,14 +48,14 @@ export async function initInput(device, output = false, smoothing = 0.5, gain = 
   /** @type {MediaStream} */
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: {
-      deviceId: { exact: device.deviceId },
+      deviceId: { exact: deviceInfo.deviceId },
       echoCancellation: false,
       noiseSuppression: false,
       autoGainControl: false,
     },
   })
 
-  console.log('🎛️ Created stream for input device:', device.label)
+  console.log('🎛️ Created stream for input device:', deviceInfo.label)
 
   // Create an audio source from the device media stream
   inputSource = ctx.createMediaStreamSource(stream)
@@ -64,10 +68,13 @@ export async function initInput(device, output = false, smoothing = 0.5, gain = 
   analyser.fftSize = cfg().ANALYSER_FFT_SIZE
   analyser.smoothingTimeConstant = smoothing
 
+  spectrumData = new Uint8Array(analyser.frequencyBinCount)
+
   console.log('🔬 Analyser created with FFT size', analyser.fftSize)
 
   // Connect the source to the analyser
-  inputSource.connect(gainNode)
+
+  inputSource?.connect(gainNode)
   gainNode.connect(analyser)
 
   if (output) {
@@ -75,12 +82,12 @@ export async function initInput(device, output = false, smoothing = 0.5, gain = 
     analyser.connect(ctx.destination)
   }
 
-  activeDevice = device
+  activeDevice = deviceInfo
 }
 
 export function stopInput() {
   analyser.disconnect()
-  inputSource.disconnect()
+  inputSource?.disconnect()
   inputSource = null
   activeDevice = null
 }
@@ -89,12 +96,13 @@ export function getActiveDevice() {
   return activeDevice
 }
 
-export function getAnalyser() {
-  return analyser
-}
-
+/**
+ * List the available audio input devices
+ * @returns {Promise<MediaDeviceInfo[] | null>}
+ */
 export async function listInputDevices() {
   const perms = await navigator.permissions.query({
+    // @ts-ignore
     name: 'microphone',
   })
 
@@ -108,6 +116,7 @@ export async function listInputDevices() {
     return null
   }
 
+  /** @type {MediaDeviceInfo[]} */
   const deviceArray = []
   const devices = await navigator.mediaDevices.enumerateDevices()
 
@@ -133,4 +142,53 @@ export async function listInputDevices() {
   })
 
   return deviceArray
+}
+
+/**
+ * Return analyser data as a texture
+ * @returns {WebGLTexture | null}
+ * @param {WebGL2RenderingContext} gl - WebGL context
+ * @param {Object} twgl - The twgl.js library
+ */
+export function getTexture(gl, twgl) {
+  if (!analyser) {
+    return null
+  }
+
+  analyser.getByteFrequencyData(spectrumData)
+
+  // Don't use RGBA as we just have one set of values, just a plain 1D array
+  // So we use RED format with internal format R8
+  return twgl.createTexture(gl, {
+    min: gl.NEAREST,
+    mag: gl.NEAREST,
+    src: spectrumData,
+    width: getBinCount(),
+    format: gl.RED,
+    internalFormat: gl.R8,
+    wrap: gl.CLAMP_TO_EDGE,
+  })
+}
+
+export function getBinCount() {
+  if (!analyser) {
+    return 0
+  }
+
+  return analyser.frequencyBinCount
+}
+
+/**
+ * Create a fake device for use in the UI
+ * @param {string} label
+ * @returns {MediaDeviceInfo}
+ */
+export function fakeDevice(label) {
+  return {
+    label,
+    deviceId: '-1',
+    groupId: '-1',
+    kind: 'audioinput',
+    toJSON: () => {},
+  }
 }

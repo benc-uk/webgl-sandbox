@@ -1,7 +1,7 @@
 {
   "name": "webgl-sandbox",
   "private": true,
-  "version": "0.0.7",
+  "version": "0.0.7-alpha01",
   "type": "module",
   "author": "Ben Coleman",
   "license": "MIT",
@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "alpinejs": "^3.14.8",
-    "handlebars": "^4.7.8",
     "simplex-noise": "^4.0.3",
     "toastify-js": "^1.12.0"
   }

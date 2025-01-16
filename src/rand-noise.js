@@ -11,9 +11,9 @@ const NOISE_SIZE_3D = cfg().NOISE_3D_SIZE
 
 /**
  * Create the noise and random textures
- * @param {WebGLRenderingContext} gl
+ * @param {WebGL2RenderingContext} gl
  * @param {Object} twgl - The twgl.js library
- * @returns {{noiseTex: WebGLTexture, randomTex: WebGLTexture}}
+ * @returns {{noiseTex: WebGLTexture, randomTex: WebGLTexture, noise3Tex: WebGLTexture}}
  */
 export function createTextures(gl, twgl) {
   const noiseTex = twgl.createTexture(gl, {

@@ -4,7 +4,7 @@
 
 import * as midi from '../lib/midi.js'
 
-/** @type {string} */
+/** @type {string | null} */
 let activeDeviceId
 
 // MIDI is fixed to 16 channels * 128 notes or CC values
@@ -84,7 +84,7 @@ function messageHandler(rawMidiMsg) {
 /**
  * Return both note and control change data as a texture
  * @returns {WebGLTexture}
- * @param {WebGLRenderingContext} gl -
+ * @param {WebGLRenderingContext} gl - WebGL context
  * @param {Object} twgl - The twgl.js library
  */
 export function getTexture(gl, twgl) {
@@ -107,7 +107,7 @@ export function getActiveDeviceName() {
     return null
   }
 
-  return midi.getInputDevice(activeDeviceId).name
+  return midi.getInputDevice(activeDeviceId)?.name
 }
 
 export async function listInputDevices() {
@@ -131,18 +131,16 @@ export async function listInputDevices() {
   await midi.getAccess()
   const devices = midi.getInputDevices()
 
-  /**
-   * @typedef {Object} Device
-   * @property {string} id - The device ID used to reference the device
-   * @property {string} name - The device name
-   */
+  if (!devices) {
+    return null
+  }
 
   /** @type {Device[]}*/
   const deviceList = []
   devices.forEach((device) => {
     deviceList.push({
       id: device.id,
-      name: device.name,
+      name: device.name || 'Unnamed device',
     })
   })
 

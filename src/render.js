@@ -3,7 +3,6 @@
 // ===============================================================================
 
 import * as twgl from 'twgl.js'
-import Handlebars from 'handlebars'
 import Alpine from 'alpinejs'
 import Toastify from 'toastify-js'
 
@@ -13,10 +12,9 @@ import boilerPlate from './shaders/boilerplate.glsl?raw'
 
 import { getGl, resize } from '../lib/gl.js'
 import { addErrorLine, clearErrors, resizeEditor, selector, getPostCode, getShaderCode } from './editor.js'
-import { getAnalyser } from './audio.js'
-import { getTexture } from './midi.js'
+import { getTexture as getAudioTexture, getBinCount } from './audio.js'
+import { getTexture as getMIDITexture } from './midi.js'
 import * as rand from './rand-noise.js'
-import { cfg } from './config.js'
 
 let looping = false
 let paused = false
@@ -74,8 +72,7 @@ function execShader(shaderCode, postCode) {
 
   clearErrors()
 
-  const ANALYSER_BINS = cfg().ANALYSER_FFT_SIZE / 2
-  const progInfo = compileShader(gl, { ANALYSER_BINS }, vertShader, shaderCode)
+  const progInfo = compileShader(gl, vertShader, shaderCode)
 
   if (!progInfo) {
     return
@@ -96,7 +93,7 @@ function execShader(shaderCode, postCode) {
     img_coord: [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1],
   })
   postFrameBuff = twgl.createFramebufferInfo(gl, undefined, gl.canvas.width, gl.canvas.height)
-  const postProgInfo = compileShader(gl, { ANALYSER_BINS }, vertShaderPost, postCode)
+  const postProgInfo = compileShader(gl, vertShaderPost, postCode)
 
   statusUpdate()
 
@@ -106,13 +103,6 @@ function execShader(shaderCode, postCode) {
    */
   function render(time) {
     fps = 1000 / (time - lastTime)
-
-    // Audio and frequency data
-    const dataArray = new Uint8Array(ANALYSER_BINS)
-    const analyser = getAnalyser()
-    if (analyser) {
-      analyser.getByteFrequencyData(dataArray)
-    }
 
     // Advance time
     let deltaTime = 0
@@ -132,9 +122,10 @@ function execShader(shaderCode, postCode) {
       u_time: elapsedTime,
       u_delta: deltaTime,
       u_resolution: [gl.canvas.width, gl.canvas.height],
-      u_aspect: [gl.canvas.clientWidth / gl.canvas.clientHeight],
-      u_analyser: dataArray,
-      u_midi_tex: getTexture(gl, twgl),
+      u_aspect: gl.canvas.width / gl.canvas.height,
+      u_analyser_tex: getAudioTexture(gl, twgl),
+      u_analyser_size: getBinCount(),
+      u_midi_tex: getMIDITexture(gl, twgl),
       u_rand_tex: randomTex,
       u_noise_tex: noiseTex,
       u_noise_tex3: noise3Tex,
@@ -293,26 +284,34 @@ export function resizeAll() {
 /**
  * Compile shader code and return the program info
  * @param {WebGL2RenderingContext} gl
- * @param {any} templateContext
- * @param {*} vertShaderCode
- * @param {*} shaderCode
- * @returns
+ * @param {string} vertShaderCode
+ * @param {string} shaderCode
+ * @returns {twgl.ProgramInfo}
  */
-function compileShader(gl, templateContext, vertShaderCode, shaderCode) {
-  const template = Handlebars.compile(boilerPlate)
-
+function compileShader(gl, vertShaderCode, shaderCode) {
   // Add extra & boilerplate code to the fragment shader
-  shaderCode = template(templateContext) + shaderCode
+  const code = boilerPlate + shaderCode
 
   // Count the number of lines in the boilerplate
   const boilerplateLines = boilerPlate.split('\n').length - 1
 
-  const progInfo = twgl.createProgramInfo(gl, [vertShaderCode, shaderCode], (errMessage) => {
+  // Create TWGL ProgramInfo, which compiles the shader with a custom error handler
+  // This error handler will parse the error message
+  const progInfo = twgl.createProgramInfo(gl, [vertShaderCode, code], (errMessage) => {
     let niceErr = 'Error compiling shader:\n\n'
     for (const line of errMessage.split('\n')) {
       if (line.includes('^^^ ERROR')) {
-        const lineNum = line.match(/ERROR: \d+:(\d+):/)[1]
-        const message = line.match(/ERROR: \d+:\d+:(.*)$/)[1]
+        const lineNumMatch = line.match(/ERROR: \d+:(\d+):/)
+        if (!lineNumMatch) {
+          continue
+        }
+        const messageMatch = line.match(/ERROR: \d+:\d+:(.*)$/)
+        if (!messageMatch) {
+          continue
+        }
+
+        const lineNum = parseInt(lineNumMatch[1])
+        const message = messageMatch[1].trim()
 
         niceErr += `Line:${lineNum - boilerplateLines} ${message}\n`
 

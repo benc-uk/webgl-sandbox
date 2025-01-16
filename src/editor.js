@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ===============================================================================
 // Handles the code editor which is based on Monaco
 // ===============================================================================
@@ -23,7 +24,7 @@ let modeKey = KEY_SHADER_CODE
 /**
  * Initialize the Monaco editor
  * @param {function} doneCallback - Callback to call when the editor is ready
- * @param {string} forceFileLoad - Force load a specific example file
+ * @param {string | null} forceFileLoad - Force load a specific example file
  */
 export function initEditor(doneCallback, forceFileLoad) {
   if (editor) return
@@ -37,6 +38,7 @@ export function initEditor(doneCallback, forceFileLoad) {
   })
 
   // Load the Monaco editor, it still uses some funky old school AMD loader
+  // @ts-ignore
   require(['vs/editor/editor.main'], async function () {
     require(['bithero/glsl'], function () {})
 

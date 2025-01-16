@@ -1,3 +1,4 @@
+// @ts-check
 // ===============================================================================
 // Configuration WIP
 // There's no UI for this yet, so it's for very advanced users

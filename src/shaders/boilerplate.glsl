@@ -11,12 +11,12 @@ uniform float u_time;
 uniform float u_delta;
 uniform float u_aspect;
 uniform vec3 u_mouse;
-uniform int u_analyser[{{ ANALYSER_BINS }}];
-const int u_analyser_size = {{ ANALYSER_BINS }};
-uniform sampler2D u_rand_tex; // Texture holding random values 256x256
-uniform sampler2D u_midi_tex; // Texture holding 16x128 MIDI data
-uniform sampler2D u_noise_tex; // Texture holding simplex noise values 256x256
-uniform sampler3D u_noise_tex3; // Texture holding simplex noise values 256x256
+uniform sampler2D u_analyser_tex; // Texture holding audio analyser data
+uniform int u_analyser_size;      // Size of audio analyser data
+uniform sampler2D u_rand_tex;     // Texture holding random values 256x256
+uniform sampler2D u_midi_tex;     // Texture holding 16x128 MIDI data
+uniform sampler2D u_noise_tex;    // Texture holding 2D simplex noise values 256x256
+uniform sampler3D u_noise_tex3;   // Texture holding 3D simplex noise values 256x256
 
 // We share boilerplate code between shaders, so these only exist in 2nd pass shader
 in vec2 v_imgcoord;
@@ -42,7 +42,7 @@ vec3 hsv2rgb(float h, float s, float v)
 }
 
 float audioFreqData(int binIndex) {
-  return float(u_analyser[binIndex]) / 255.0;
+  return texture(u_analyser_tex, vec2(float(binIndex) / float(u_analyser_size), 0.0)).r;
 }
 
 float goldNoise(in vec2 xy, in float seed) {

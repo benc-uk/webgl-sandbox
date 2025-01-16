@@ -24,13 +24,16 @@ Alpine.data('app', () => ({
   isFullscreen: false,
   modeShader: true,
 
+  /** @type {MediaDeviceInfo[] | null} */
   audioDevices: [],
+
   selectedAudioDeviceId: '-1',
   disableAudioSelect: false,
   audioSmoothing: 0.5,
   audioOutput: true,
   audioGain: 1.0,
 
+  /** @type {Device[] | null} */
   midiDevices: [],
   selectedMidiDeviceId: '-1',
 
@@ -116,11 +119,11 @@ Alpine.data('app', () => ({
 
     if (this.audioDevices === null) {
       // If access is denied, we get null back so put a dummy device in the list
-      this.audioDevices = [{ label: 'Input audio access denied', deviceId: '-1' }]
+      this.audioDevices = [audio.fakeDevice('Input audio access denied')]
       this.disableAudioSelect = true
     } else {
       this.disableAudioSelect = false
-      this.audioDevices.unshift({ label: '--- Select Device ---', deviceId: '-1' })
+      this.audioDevices.unshift(audio.fakeDevice('--- Select Device ---'))
       const activeAudioDevice = audio.getActiveDevice()
 
       // Disable the select dropdown if we have an active device
@@ -133,7 +136,7 @@ Alpine.data('app', () => ({
 
   async audioOpen() {
     this.$refs.audioDialog.close()
-    const device = this.audioDevices.find((d) => d.deviceId === this.selectedAudioDeviceId)
+    const device = this.audioDevices?.find((d) => d.deviceId === this.selectedAudioDeviceId)
 
     if (!device) {
       return
