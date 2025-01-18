@@ -44,19 +44,19 @@ export function execPressed() {
   // This trick allows the render loop to catch the running flag and exit
   // Without this you get a lot of WebGL errors, don't ask, it works...
   setTimeout(() => {
-    const code = getShaderCode().trim()
+    const code = getShaderCode()
     if (!code || code.length === 0) {
       Alpine.store('error', "No shader code! That's not going to work...")
       return
     }
 
-    const postCode = getPostCode().trim()
+    const postCode = getPostCode()
     if (!postCode || postCode.length === 0) {
       Alpine.store('error', "No post-processing code! That's not going to work...")
       return
     }
 
-    execShader(code, postCode)
+    execShader(code.trim(), postCode.trim())
   }, 50)
 }
 

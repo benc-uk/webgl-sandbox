@@ -41,7 +41,9 @@ jobs:
         run: npm ci
 
       - name: Check & lint
-        run: npm run check
+        run: |
+          npm run check-types
+          npm run check
 
       - name: Build
         run: npm run build

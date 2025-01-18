@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite'
 import version from 'vite-plugin-package-version'
+import monacoEditorEsmPlugin from 'vite-plugin-monaco-editor-esm'
 
 export default defineConfig({
-  plugins: [version()],
+  plugins: [version(), monacoEditorEsmPlugin({})],
 
   server: {
     port: 3000,

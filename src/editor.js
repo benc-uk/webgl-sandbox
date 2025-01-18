@@ -1,11 +1,13 @@
-// @ts-nocheck
 // ===============================================================================
 // Handles the code editor which is based on Monaco
 // ===============================================================================
 
-const $ = document.querySelector.bind(document)
 import { execPressed } from './render.js'
 import defaultPostShader from './shaders/post.glsl.frag?raw'
+
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
+
+import { glslLangTokenProvider } from './lang-glsl.js'
 
 // Used everywhere, selector for the GL canvas
 export const selector = '#output'
@@ -23,78 +25,101 @@ let modeKey = KEY_SHADER_CODE
 
 /**
  * Initialize the Monaco editor
- * @param {function} doneCallback - Callback to call when the editor is ready
+ * @param {(codeEditor: monaco.editor.ICodeEditor) => void} doneCallback - Callback to call when the editor is ready
  * @param {string | null} forceFileLoad - Force load a specific example file
  */
-export function initEditor(doneCallback, forceFileLoad) {
+export async function initEditor(doneCallback, forceFileLoad) {
   if (editor) return
 
-  // Crap needed for Monaco editor
-  require.config({
-    paths: {
-      vs: 'monaco/min/vs',
-      bithero: 'monaco/plugins', // Custom GLS plugin
-    },
-  })
+  if (doneCallback) {
+    monaco.editor.onDidCreateEditor(doneCallback)
+  }
 
-  // Load the Monaco editor, it still uses some funky old school AMD loader
+  let code
+  if (forceFileLoad) {
+    code = await fetchTextFile(`samples/${forceFileLoad}.glsl.frag`)
+  } else {
+    code = getShaderCode()
+
+    // Load default
+    if (code === null) {
+      console.log('No shader code found, loading default...')
+
+      code = await fetchTextFile(`samples/raytracer.glsl.frag`)
+      localStorage.setItem(KEY_SHADER_CODE, code)
+    }
+  }
+
+  // Default for post-processing code
+  if (getPostCode() === null) {
+    localStorage.setItem(KEY_POST_CODE, defaultPostShader)
+  }
+
+  monaco.languages.register({ id: 'glsl' })
   // @ts-ignore
-  require(['vs/editor/editor.main'], async function () {
-    require(['bithero/glsl'], function () {})
+  monaco.languages.setMonarchTokensProvider('glsl', glslLangTokenProvider)
 
-    if (doneCallback) {
-      monaco.editor.onDidCreateEditor(doneCallback)
-    }
-
-    let code
-    if (forceFileLoad) {
-      code = await fetchTextFile(`samples/${forceFileLoad}.glsl.frag`)
-    } else {
-      code = getShaderCode()
-
-      // Load default
-      if (code === null) {
-        console.log('No shader code found, loading default...')
-
-        code = await fetchTextFile(`samples/raytracer.glsl.frag`)
-        localStorage.setItem(KEY_SHADER_CODE, code)
-      }
-    }
-
-    // Default for post-processing code
-    if (getPostCode() === null) {
-      localStorage.setItem(KEY_POST_CODE, defaultPostShader)
-    }
-
-    editor = monaco.editor.create($('#code'), {
-      value: code,
-      theme: 'vs-dark',
-      language: 'glsl',
-      minimap: { enabled: false },
-      automaticLayout: true,
-      scrollBeyondLastLine: false,
-      glyphMargin: true,
-    })
-
-    editor.focus()
-
-    // Trap Ctrl+S to run the shader and prevent the browser from saving the file
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      execPressed()
-    })
-
-    editor.onDidChangeModelContent(() => {
-      localStorage.setItem(modeKey, editor.getValue())
-    })
-
-    decorations = editor.createDecorationsCollection()
+  monaco.editor.defineTheme('custom', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      {
+        foreground: '#be92ea',
+        token: 'keyword',
+      },
+      {
+        foreground: '#ff5874',
+        token: 'builtin',
+      },
+      {
+        foreground: '#55aa66',
+        token: 'entity.name.function',
+      },
+      {
+        foreground: '#7184ff',
+        token: 'entity.name.type',
+      },
+      {
+        foreground: '#888888',
+        token: 'comment',
+      },
+    ],
+    colors: {},
   })
+
+  /** @type {HTMLDivElement | null} */
+  const codeDiv = document.querySelector('#code')
+  if (!codeDiv) return
+
+  editor = monaco.editor.create(codeDiv, {
+    value: code,
+    theme: 'custom',
+    language: 'glsl',
+    minimap: { enabled: false },
+    automaticLayout: true,
+    scrollBeyondLastLine: false,
+    glyphMargin: true,
+    fontSize: 16,
+  })
+
+  editor.focus()
+
+  // Trap Ctrl+S to run the shader and prevent the browser from saving the file
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+    execPressed()
+  })
+
+  editor.onDidChangeModelContent(() => {
+    localStorage.setItem(modeKey, editor.getValue())
+  })
+
+  decorations = editor.createDecorationsCollection()
 }
 
 /**
  * Add an error to the editor on a given line
  * @param {number} lineNum - Line number to add the error to
- * @param {*} msg - Error message to display
+ * @param {string} msg - Error message to display
  */
 export function addErrorLine(lineNum, msg) {
   decorations.append([
@@ -120,10 +145,19 @@ export function clearErrors() {
 // Resize the editor to fit properly under the canvas
 export function resizeEditor() {
   const width = window.innerWidth - 0
-  const height = window.innerHeight - $(selector).height - 80 // 80 is a magic number that works
 
-  $('#code').style.height = `${height}px`
-  $('#code').style.width = `${width}px`
+  /** @type {HTMLCanvasElement | null} */
+  const canvas = document.querySelector(selector)
+  if (!canvas) return
+
+  /** @type {HTMLDivElement | null} */
+  const codeDiv = document.querySelector('#code')
+  if (!codeDiv) return
+
+  const height = window.innerHeight - canvas.height - 80 // 80 is a magic number that works
+
+  codeDiv.style.height = `${height}px`
+  codeDiv.style.width = `${width}px`
 }
 
 /**
@@ -141,7 +175,7 @@ export async function loadExample(name) {
 
 /**
  * Get the current shader code from local storage
- * @returns {string}
+ * @returns {string | null}
  */
 export function getShaderCode() {
   return localStorage.getItem(KEY_SHADER_CODE)
@@ -149,7 +183,7 @@ export function getShaderCode() {
 
 /**
  * Get the current post-processing code from local storage
- * @returns {string}
+ * @returns {string | null}
  */
 export function getPostCode() {
   return localStorage.getItem(KEY_POST_CODE)
