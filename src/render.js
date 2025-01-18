@@ -298,7 +298,7 @@ function compileShader(gl, vertShaderCode, shaderCode) {
   // Create TWGL ProgramInfo, which compiles the shader with a custom error handler
   // This error handler will parse the error message
   const progInfo = twgl.createProgramInfo(gl, [vertShaderCode, code], (errMessage) => {
-    let niceErr = 'Error compiling shader:\n\n'
+    let niceErr = 'Error compiling shader:<br>'
     for (const line of errMessage.split('\n')) {
       if (line.includes('^^^ ERROR')) {
         const lineNumMatch = line.match(/ERROR: \d+:(\d+):/)
@@ -313,7 +313,7 @@ function compileShader(gl, vertShaderCode, shaderCode) {
         const lineNum = parseInt(lineNumMatch[1])
         const message = messageMatch[1].trim()
 
-        niceErr += `Line:${lineNum - boilerplateLines} ${message}\n`
+        niceErr += `Line:${lineNum - boilerplateLines} ${message}<br>`
 
         addErrorLine(lineNum - boilerplateLines, message)
       }
