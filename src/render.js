@@ -113,15 +113,19 @@ function execShader(mainCode, postCode, stateCode) {
 
   const stateBufferInfo = twgl.createBufferInfoFromArrays(gl, {
     position: [-1, -1, 0, 1, -1, 0, -1, 1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0],
-    img_coord: [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1],
+    state_coord: [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1],
   })
 
   const STATE_WIDTH = 256
-  const STATE_HEIGHT = 1
+  const STATE_HEIGHT = 256
   const stateTex = twgl.createTexture(gl, {
     src: new Uint8Array(STATE_WIDTH * STATE_HEIGHT * 4),
     format: gl.RGBA,
     wrap: gl.CLAMP_TO_EDGE,
+    min: gl.NEAREST, // Really important to use NEAREST here
+    mag: gl.NEAREST, // Really important to use NEAREST here
+    width: STATE_WIDTH,
+    height: STATE_HEIGHT,
   })
 
   const stateFrameBuff = twgl.createFramebufferInfo(gl, undefined, STATE_WIDTH, STATE_HEIGHT)
@@ -151,7 +155,7 @@ function execShader(mainCode, postCode, stateCode) {
       return
     }
 
-    const uniforms = {
+    const commonUniforms = {
       u_time: elapsedTime,
       u_delta: deltaTime,
       u_resolution: [gl.canvas.width, gl.canvas.height],
@@ -166,47 +170,47 @@ function execShader(mainCode, postCode, stateCode) {
       u_keys_tex: getKeysTexture(gl),
     }
 
+    // Pre-render pass
+    // State handling pre-pass, only writes to the state texture
     const stateUniforms = {
       u_state_tex: stateTex,
-      ...uniforms,
+      ...commonUniforms,
     }
 
-    // State pre-pass
     twgl.bindFramebufferInfo(gl, stateFrameBuff)
     gl.useProgram(stateProgInfo.program)
     twgl.setBuffersAndAttributes(gl, stateProgInfo, stateBufferInfo)
     twgl.setUniforms(stateProgInfo, stateUniforms)
-    gl.clearColor(0.0, 0.0, 0.0, 1.0)
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT)
     twgl.drawBufferInfo(gl, stateBufferInfo)
 
     // Copy the state framebuffer back to the state texture
     gl.bindTexture(gl.TEXTURE_2D, stateTex)
     gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, STATE_WIDTH, STATE_HEIGHT, 0)
 
-    const postPassUniforms = {
-      image: postFrameBuff.attachments[0],
-      ...uniforms,
+    // Pass 1
+    // Main pass renders to the post-processing framebuffer
+    const mainUniforms = {
+      u_state_tex: stateTex,
+      ...commonUniforms,
     }
 
     twgl.bindFramebufferInfo(gl, postFrameBuff)
-
+    gl.useProgram(mainProgInfo.program)
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
     gl.clearColor(0.0, 0.0, 0.0, 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-    // Draw the fullscreen quad using the main shader
-    const mainUniforms = {
-      u_state_tex: stateTex,
-      ...uniforms,
-    }
-
-    gl.useProgram(mainProgInfo.program)
     twgl.setBuffersAndAttributes(gl, mainProgInfo, bufferInfo)
     twgl.setUniforms(mainProgInfo, mainUniforms)
     twgl.drawBufferInfo(gl, bufferInfo)
 
-    // Post processing 2nd pass
+    // Pass 2
+    // Post processing which renders to the screen
+    const postPassUniforms = {
+      image: postFrameBuff.attachments[0],
+      ...commonUniforms,
+    }
+
     gl.useProgram(postProgInfo.program)
     twgl.setUniforms(postProgInfo, postPassUniforms)
     twgl.setBuffersAndAttributes(gl, postProgInfo, postBufferInfo)

@@ -19,13 +19,20 @@ uniform sampler2D u_keys_tex;     // Input texture holding key presses
 uniform sampler2D u_noise_tex;    // Texture holding 2D simplex noise values 256x256
 uniform sampler3D u_noise_tex3;   // Texture holding 3D simplex noise values 256x256
 
-// We share boilerplate code between shaders, so these only exist in 2nd pass shader
-in vec2 v_imgcoord;
-uniform sampler2D image;
-// This only exists in 1st pass state shader
-uniform sampler2D u_state_tex;
+// We share boilerplate code between shaders, so these only exist in some shaders passes
+in vec2 v_imgcoord;            // Used in state and post
+uniform sampler2D image;       // Used in post
+uniform sampler2D u_state_tex; // Used in state
 
 out vec4 fragColor;
+
+#define stateSize 256.0
+#define getState(INDEX) texture(u_state_tex, vec2(float(INDEX) / stateSize, 0.0)).r
+
+// Only works in state shader
+#define stateSetup fragColor = texture(u_state_tex, v_imgcoord);             
+// Only works in state shader
+#define setState(INDEX, VAL) if(int(v_imgcoord.x * stateSize) == INDEX) fragColor = vec4(VAL) 
 
 vec2 screenPos(float offset) {
   vec2 screenPos = gl_FragCoord.xy / u_resolution.xy;
