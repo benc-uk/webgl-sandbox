@@ -3,6 +3,7 @@
 // ===============================================================================
 
 import * as midi from '../lib/midi.js'
+import * as twgl from 'twgl.js'
 
 /** @type {string | null} */
 let activeDeviceId
@@ -85,9 +86,8 @@ function messageHandler(rawMidiMsg) {
  * Return both note and control change data as a texture
  * @returns {WebGLTexture}
  * @param {WebGLRenderingContext} gl - WebGL context
- * @param {Object} twgl - The twgl.js library
  */
-export function getTexture(gl, twgl) {
+export function getTexture(gl) {
   return twgl.createTexture(gl, {
     min: gl.NEAREST,
     mag: gl.NEAREST,

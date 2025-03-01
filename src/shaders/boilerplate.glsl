@@ -15,12 +15,15 @@ uniform sampler2D u_analyser_tex; // Texture holding audio analyser data
 uniform int u_analyser_size;      // Size of audio analyser data
 uniform sampler2D u_rand_tex;     // Texture holding random values 256x256
 uniform sampler2D u_midi_tex;     // Texture holding 16x128 MIDI data
+uniform sampler2D u_keys_tex;     // Input texture holding key presses
 uniform sampler2D u_noise_tex;    // Texture holding 2D simplex noise values 256x256
 uniform sampler3D u_noise_tex3;   // Texture holding 3D simplex noise values 256x256
 
 // We share boilerplate code between shaders, so these only exist in 2nd pass shader
 in vec2 v_imgcoord;
 uniform sampler2D image;
+// This only exists in 1st pass state shader
+uniform sampler2D u_state_tex;
 
 out vec4 fragColor;
 
@@ -111,4 +114,9 @@ float cos01(float x, float scale) {
 
 float tan01(float x, float scale) {
   return tan(x * scale) * 0.5 + 0.5;
+}
+
+bool keyIsPressed(int key) {
+  vec2 keyPos = vec2(float(key) / 256.0, 0.0);
+  return texture(u_keys_tex, keyPos).r > 0.0;
 }

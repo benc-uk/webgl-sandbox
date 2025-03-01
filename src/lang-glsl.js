@@ -1,5 +1,11 @@
 /* eslint-disable */
 
+// ===============================================================================
+// Monarch language definition for GLSL
+// Borrowed from: https://www.npmjs.com/package/@bithero/monaco-glsl?activeTab=code
+// Modified to work with ESM and Vite. Under the terms of the GPL v3 license
+// ===============================================================================
+
 export const glslLangTokenProvider = {
   tokenPostfix: '.glsl',
   defaultToken: 'invalid',

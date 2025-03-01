@@ -3,6 +3,7 @@
 // ===============================================================================
 
 import { cfg } from './config.js'
+import * as twgl from 'twgl.js'
 
 /** @type {AudioContext | null} */
 let ctx
@@ -148,9 +149,8 @@ export async function listInputDevices() {
  * Return analyser data as a texture
  * @returns {WebGLTexture | null}
  * @param {WebGL2RenderingContext} gl - WebGL context
- * @param {Object} twgl - The twgl.js library
  */
-export function getTexture(gl, twgl) {
+export function getTexture(gl) {
   if (!analyser) {
     return null
   }

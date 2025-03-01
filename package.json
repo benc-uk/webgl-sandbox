@@ -1,7 +1,7 @@
 {
   "name": "webgl-sandbox",
   "private": true,
-  "version": "0.0.7-alpha02",
+  "version": "0.0.8",
   "type": "module",
   "author": "Ben Coleman",
   "license": "MIT",
@@ -14,14 +14,14 @@
     "fix": "eslint --fix ./src/ ./lib/ && prettier --write ./src/*.js"
   },
   "devDependencies": {
-    "@eslint/js": "^9.18.0",
-    "eslint": "^9.18.0",
-    "globals": "^15.14.0",
-    "prettier": "^3.4.2",
+    "@eslint/js": "^9.21.0",
+    "eslint": "^9.21.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.2",
     "twgl.js": "^5.5.4",
-    "typescript": "^5.7.3",
-    "vite": "^6.0.7",
-    "vite-plugin-monaco-editor-esm": "^2.0.1",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0",
+    "vite-plugin-monaco-editor-esm": "^2.0.2",
     "vite-plugin-package-version": "^1.1.0"
   },
   "dependencies": {

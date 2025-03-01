@@ -98,9 +98,16 @@ select {
   margin: 3px;
   cursor: pointer;
   border-radius: 3px;
-  font-size: 16px;
+  font-size: 19px;
   color: var(--blue);
   width: 100%;
+}
+
+#toolbar select {
+  width: auto;
+  height: 45px;
+  padding: 0px 5px;
+  margin: 0px 5px;
 }
 
 #output-wrap {

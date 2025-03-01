@@ -74,8 +74,8 @@ float u_delta           // Time delta, usually constant
 float u_aspect          // Aspect ration of the output
 vec3 u_mouse            // Mouse coords in x & y, z holds mouse buttons
 
-int u_analyser[]        // Audio frequency data from spectrum analyser
-int u_analyser_size     // Size of the u_analyser array
+sampler2D u_analyser_tex // Texture holding audio analyser data
+int u_analyser_size      // Number of audio analyser entries & width of u_analyser_tex
 
 sampler2D u_rand_tex    // Texture holding random values in R,G,B & A 256x256
 sampler2D u_noise_tex   // Texture holding simplex noise 256x256
@@ -122,6 +122,9 @@ float midiCC(int chan, int cc)
 
 // Get highest note (scaled to 0-1) played on given channel
 midiNoteAny(int chan)
+
+// Helper to get keyboard status
+bool keyIsPressed(int keyCode)
 
 // Random and noise functions
 float goldNoise(in vec2 xy, in float seed)

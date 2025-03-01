@@ -80,17 +80,23 @@
   <!-- Main WebGL output canvas -->
   <div x-ref="outputWrap" id="output-wrap">
     <canvas id="output" x-ref="output" width="800" height="400" @dblclick="fullscreen" @keydown.space="pauseOrResume"
-      @mousemove="mouseMove" @mousedown="mouseMove" tabindex="-1"></canvas>
+      @mousemove="mouseMove" @mousedown="mouseMove" @keydown="keyDownHandler" @keyup="keyUpHandler"
+      tabindex="-1"></canvas>
   </div>
 
   <!-- Toolbar area -->
   <div id="toolbar" class="flex">
+    <select x-model="selectedMode" @change="changeMode">
+      <option value="state">📦 State</option>
+      <option value="main" selected>🖼️ Main</option>
+      <option value="post">📺 Post </option>
+    </select>
     <button @click="execPressed" title="Execute and run code">
       <i class="fa-fw fa-solid fa-flag-checkered"></i>
     </button>
-    <button @click="switchEditorMode" title="Switch editor shader mode" :class="!modeShader ? 'active':''">
+    <!-- <button @click="switchEditorMode" title="Switch editor shader mode" :class="!modeShader ? 'active':''">
       <i class="fa-fw fa-solid fa-paint-roller"></i>
-    </button>
+    </button> -->
     <button @click="pauseOrResume" title="Pause/Run" :class="$store.paused ? 'fa-play' : 'fa-pause'">
       <i class="fa-fw fa-solid"></i>
     </button>

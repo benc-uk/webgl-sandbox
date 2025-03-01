@@ -13,6 +13,8 @@
     "module": "ESNext", // Use ESNext to support import/export syntax
     "rootDir": ".", // Root directory of the project
     "strictNullChecks": true
+    // "strict": true,
+    // "allowSyntheticDefaultImports": true
   },
   "include": ["src/**/*.js"] // Ensures all JavaScript files are type-checked
 }

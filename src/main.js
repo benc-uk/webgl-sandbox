@@ -16,13 +16,15 @@ import { getGl } from '../lib/gl.js'
 import { execPressed, pauseOrResume, rewind, videoCapture, resizeAll } from './render.js'
 import { loadExample, initEditor, selector, switchMode } from './editor.js'
 import { cfg } from './config.js'
+import { keyDownHandler, keyUpHandler } from './inputs'
 
 Alpine.data('app', () => ({
   version: `v${import.meta.env.PACKAGE_VERSION}`,
 
   showCode: true,
   isFullscreen: false,
-  modeShader: true,
+
+  selectedMode: 'main',
 
   /** @type {MediaDeviceInfo[] | null} */
   audioDevices: [],
@@ -92,6 +94,7 @@ Alpine.data('app', () => ({
     this.$refs.fileDialog.showModal()
   },
 
+  /** @param {string} file */
   async loadSample(file) {
     this.$refs.fileDialog.close()
 
@@ -105,7 +108,7 @@ Alpine.data('app', () => ({
         duration: 2000,
       }).showToast()
 
-      this.modeShader = true
+      this.modeShader = 'main'
     } catch (err) {
       Alpine.store('error', err.message)
     }
@@ -229,20 +232,23 @@ Alpine.data('app', () => ({
     Alpine.store('mouseY', evt.clientY)
   },
 
-  switchEditorMode() {
+  changeMode(evt) {
+    const mode = evt.target.value
+
     Toastify({
-      text: `Switched editor to ${this.modeShader ? 'post-processing' : 'shader'} mode`,
+      text: `Switched editor to ${mode} mode`,
       duration: 2000,
     }).showToast()
 
-    switchMode()
-    this.modeShader = !this.modeShader
+    switchMode(mode)
   },
 
   pauseOrResume,
   execPressed,
   rewind,
   videoCapture,
+  keyUpHandler,
+  keyDownHandler,
 }))
 
 Alpine.start()

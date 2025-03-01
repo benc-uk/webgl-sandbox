@@ -8,12 +8,14 @@ import Toastify from 'toastify-js'
 
 import vertShader from './shaders/base.glsl.vert?raw'
 import vertShaderPost from './shaders/post.glsl.vert?raw'
+import vertShaderState from './shaders/state.glsl.vert?raw'
 import boilerPlate from './shaders/boilerplate.glsl?raw'
 
 import { getGl, resize } from '../lib/gl.js'
-import { addErrorLine, clearErrors, resizeEditor, selector, getPostCode, getShaderCode } from './editor.js'
+import { addErrorLine, clearErrors, resizeEditor, selector, getCode } from './editor.js'
 import { getTexture as getAudioTexture, getBinCount } from './audio.js'
 import { getTexture as getMIDITexture } from './midi.js'
+import { getTexture as getKeysTexture, getMouseData } from './inputs.js'
 import * as rand from './rand-noise.js'
 
 let looping = false
@@ -21,8 +23,14 @@ let paused = false
 let lastTime = 0
 let elapsedTime = 0
 let fps = 0
+
+/** @type {MediaStream | null} */
 let stream
+
+/** @type {MediaRecorder} */
 let mediaRecorder
+
+/** @type {twgl.FramebufferInfo} */
 let postFrameBuff
 
 /**
@@ -44,37 +52,45 @@ export function execPressed() {
   // This trick allows the render loop to catch the running flag and exit
   // Without this you get a lot of WebGL errors, don't ask, it works...
   setTimeout(() => {
-    const code = getShaderCode()
-    if (!code || code.length === 0) {
+    const mainCode = getCode('main')
+    if (!mainCode || mainCode.length === 0) {
       Alpine.store('error', "No shader code! That's not going to work...")
       return
     }
 
-    const postCode = getPostCode()
+    const postCode = getCode('post')
     if (!postCode || postCode.length === 0) {
       Alpine.store('error', "No post-processing code! That's not going to work...")
       return
     }
 
-    execShader(code.trim(), postCode.trim())
+    const stateCode = getCode('state')
+    if (!stateCode || stateCode.length === 0) {
+      Alpine.store('error', "No state code! That's not going to work...")
+      return
+    }
+
+    execShader(mainCode.trim(), postCode.trim(), stateCode.trim())
   }, 50)
 }
 
 /**
  * Compile and run the shader, including the main inner render loop
  * Called only from execPressed()
- * @param {string} shaderCode - The fragment shader code
+ * @param {string} mainCode - The fragment shader code
+ * @param {string} postCode - The post-processing shader code
+ * @param {string} stateCode - The state shader code
  */
-function execShader(shaderCode, postCode) {
+function execShader(mainCode, postCode, stateCode) {
   const gl = getGl(selector, false)
   gl.enable(gl.DEPTH_TEST)
   gl.enable(gl.BLEND)
 
   clearErrors()
 
-  const progInfo = compileShader(gl, vertShader, shaderCode)
+  const mainProgInfo = compileShader(gl, vertShader, mainCode)
 
-  if (!progInfo) {
+  if (!mainProgInfo) {
     return
   }
 
@@ -94,6 +110,23 @@ function execShader(shaderCode, postCode) {
   })
   postFrameBuff = twgl.createFramebufferInfo(gl, undefined, gl.canvas.width, gl.canvas.height)
   const postProgInfo = compileShader(gl, vertShaderPost, postCode)
+
+  const stateBufferInfo = twgl.createBufferInfoFromArrays(gl, {
+    position: [-1, -1, 0, 1, -1, 0, -1, 1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0],
+    img_coord: [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1],
+  })
+
+  const STATE_WIDTH = 256
+  const STATE_HEIGHT = 1
+  const stateTex = twgl.createTexture(gl, {
+    src: new Uint8Array(STATE_WIDTH * STATE_HEIGHT * 4),
+    format: gl.RGBA,
+    wrap: gl.CLAMP_TO_EDGE,
+  })
+
+  const stateFrameBuff = twgl.createFramebufferInfo(gl, undefined, STATE_WIDTH, STATE_HEIGHT)
+
+  const stateProgInfo = compileShader(gl, vertShaderState, stateCode)
 
   statusUpdate()
 
@@ -123,14 +156,33 @@ function execShader(shaderCode, postCode) {
       u_delta: deltaTime,
       u_resolution: [gl.canvas.width, gl.canvas.height],
       u_aspect: gl.canvas.width / gl.canvas.height,
-      u_analyser_tex: getAudioTexture(gl, twgl),
+      u_analyser_tex: getAudioTexture(gl),
       u_analyser_size: getBinCount(),
-      u_midi_tex: getMIDITexture(gl, twgl),
+      u_midi_tex: getMIDITexture(gl),
       u_rand_tex: randomTex,
       u_noise_tex: noiseTex,
       u_noise_tex3: noise3Tex,
-      u_mouse: [Alpine.store('mouseX'), Alpine.store('mouseY'), Alpine.store('mouseBut')],
+      u_mouse: getMouseData(),
+      u_keys_tex: getKeysTexture(gl),
     }
+
+    const stateUniforms = {
+      u_state_tex: stateTex,
+      ...uniforms,
+    }
+
+    // State pre-pass
+    twgl.bindFramebufferInfo(gl, stateFrameBuff)
+    gl.useProgram(stateProgInfo.program)
+    twgl.setBuffersAndAttributes(gl, stateProgInfo, stateBufferInfo)
+    twgl.setUniforms(stateProgInfo, stateUniforms)
+    gl.clearColor(0.0, 0.0, 0.0, 1.0)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    twgl.drawBufferInfo(gl, stateBufferInfo)
+
+    // Copy the state framebuffer back to the state texture
+    gl.bindTexture(gl.TEXTURE_2D, stateTex)
+    gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, STATE_WIDTH, STATE_HEIGHT, 0)
 
     const postPassUniforms = {
       image: postFrameBuff.attachments[0],
@@ -143,10 +195,15 @@ function execShader(shaderCode, postCode) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-    // Draw the fullscreen quad using the shader
-    gl.useProgram(progInfo.program)
-    twgl.setBuffersAndAttributes(gl, progInfo, bufferInfo)
-    twgl.setUniforms(progInfo, uniforms)
+    // Draw the fullscreen quad using the main shader
+    const mainUniforms = {
+      u_state_tex: stateTex,
+      ...uniforms,
+    }
+
+    gl.useProgram(mainProgInfo.program)
+    twgl.setBuffersAndAttributes(gl, mainProgInfo, bufferInfo)
+    twgl.setUniforms(mainProgInfo, mainUniforms)
     twgl.drawBufferInfo(gl, bufferInfo)
 
     // Post processing 2nd pass
@@ -223,6 +280,8 @@ export function videoCapture(outputEl) {
   }).showToast()
 
   stream = outputEl.captureStream(60)
+
+  /** @type {Blob[]} */
   const recordedChunks = []
   mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' })
 
