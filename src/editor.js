@@ -35,16 +35,17 @@ export async function initEditor(doneCallback, forceFileLoad) {
 
   let code
   if (forceFileLoad) {
-    code = await fetchTextFile(`samples/${forceFileLoad}.glsl.frag`)
-  } else {
+    await loadExample(forceFileLoad)
     code = getCode('main')
+  } else {
+    const tmpCode = getCode('main')
 
     // Load default
-    if (code === null) {
+    if (tmpCode === null) {
       console.log('No shader code found, loading default...')
 
-      code = await fetchTextFile(`samples/raytracer.glsl.frag`)
-      localStorage.setItem(`mainCode`, code)
+      await loadExample('raytracer')
+      code = getCode('main')
     }
   }
 
@@ -172,9 +173,26 @@ export function resizeEditor() {
  * @returns {Promise<void>}
  */
 export async function loadExample(name) {
-  const code = await fetchTextFile(`samples/${name}.glsl.frag`)
-  localStorage.setItem('shaderCode', code)
-  editor.setValue(code)
+  const mainCode = await fetchTextFile(`samples/${name}/main.glsl.frag`)
+  localStorage.setItem('mainCode', mainCode)
+  if (editor) editor.setValue(mainCode)
+  modeKey = 'main'
+
+  try {
+    const postCode = await fetchTextFile(`samples/${name}/post.glsl.frag`)
+    localStorage.setItem('postCode', postCode)
+    // eslint-disable-next-line no-unused-vars
+  } catch (e) {
+    localStorage.setItem('postCode', defaultPostShader)
+  }
+
+  try {
+    const stateCode = await fetchTextFile(`samples/${name}/state.glsl.frag`)
+    localStorage.setItem('stateCode', stateCode)
+    // eslint-disable-next-line no-unused-vars
+  } catch (e) {
+    localStorage.setItem('stateCode', defaultStateShader)
+  }
 }
 
 /**

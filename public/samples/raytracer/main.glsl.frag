@@ -32,8 +32,11 @@ void main() {
 
   int hitIndex = -1; // Negative means no hit
 
+  float sx = (getState(1) * 30.0) - 15.0;
+  float sy = (getState(2) * 30.0) - 15.0;
+
   // Unable to move this outside of main() for weird GLSL reasons
-  scene[0] = Sphere(vec3(0.0, 0.0, 0.0), 5.2, vec3(0.3, 0.3, 1.0), 30.0);
+  scene[0] = Sphere(vec3(sx, sy, 0.0), 5.2, vec3(0.3, 0.3, 1.0), 30.0);
   scene[1] = Sphere(vec3(0.0, 1.0, 0.0), 2.0, vec3(0.8, 0.25, 0.2), 100.0);
   scene[2] = Sphere(vec3(0.0, -1.0, 0.0), 1.2, vec3(0.1, 0.7, 0.1), 6.0);
 
@@ -45,7 +48,7 @@ void main() {
   bgColor *= (1.2 - screenPos.y) * vec3(2.3, 0.2, 0.0);
   
   // Rotate spheres around center each frame
-  scene[0].position.y = 1.5 * sin(u_time*2.0);
+  scene[0].position.y += 1.5 * sin(u_time*2.0);
   scene[1].position.x = 12.5 * cos(u_time*0.8);
   scene[1].position.z = 12.5 * sin(u_time*0.8);
   scene[2].position.x = 7.5 * cos(-u_time*0.7);

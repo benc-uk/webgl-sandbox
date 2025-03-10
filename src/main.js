@@ -100,7 +100,6 @@ Alpine.data('app', () => ({
 
     try {
       await loadExample(file)
-      rewind()
       execPressed()
 
       Toastify({
@@ -109,6 +108,8 @@ Alpine.data('app', () => ({
       }).showToast()
 
       this.modeShader = 'main'
+
+      rewind()
     } catch (err) {
       Alpine.store('error', err.message)
     }

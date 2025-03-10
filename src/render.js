@@ -17,6 +17,7 @@ import { getTexture as getAudioTexture, getBinCount } from './audio.js'
 import { getTexture as getMIDITexture } from './midi.js'
 import { getTexture as getKeysTexture, getMouseData } from './inputs.js'
 import * as rand from './rand-noise.js'
+import { cfg } from './config'
 
 let looping = false
 let paused = false
@@ -75,7 +76,7 @@ export function execPressed() {
 }
 
 /**
- * Compile and run the shader, including the main inner render loop
+ * Compile and run the shaders, including the main inner render loop
  * Called only from execPressed()
  * @param {string} mainCode - The fragment shader code
  * @param {string} postCode - The post-processing shader code
@@ -116,19 +117,18 @@ function execShader(mainCode, postCode, stateCode) {
     state_coord: [0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1],
   })
 
-  const STATE_WIDTH = 256
-  const STATE_HEIGHT = 256
+  const stateSize = cfg().STATE_SIZE
   const stateTex = twgl.createTexture(gl, {
-    src: new Uint8Array(STATE_WIDTH * STATE_HEIGHT * 4),
+    src: new Uint8Array(stateSize * stateSize * 4),
     format: gl.RGBA,
     wrap: gl.CLAMP_TO_EDGE,
     min: gl.NEAREST, // Really important to use NEAREST here
     mag: gl.NEAREST, // Really important to use NEAREST here
-    width: STATE_WIDTH,
-    height: STATE_HEIGHT,
+    width: stateSize,
+    height: stateSize,
   })
 
-  const stateFrameBuff = twgl.createFramebufferInfo(gl, undefined, STATE_WIDTH, STATE_HEIGHT)
+  const stateFrameBuff = twgl.createFramebufferInfo(gl, undefined, stateSize, stateSize)
 
   const stateProgInfo = compileShader(gl, vertShaderState, stateCode)
 
@@ -186,7 +186,7 @@ function execShader(mainCode, postCode, stateCode) {
 
     // Copy the state framebuffer back to the state texture
     gl.bindTexture(gl.TEXTURE_2D, stateTex)
-    gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, STATE_WIDTH, STATE_HEIGHT, 0)
+    gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, stateSize, stateSize, 0)
 
     // Pass 1
     // Main pass renders to the post-processing framebuffer

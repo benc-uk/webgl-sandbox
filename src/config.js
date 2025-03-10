@@ -10,6 +10,7 @@
  * @property {number} NOISE_SIZE
  * @property {number} NOISE_3D_SIZE
  * @property {number} ANALYSER_FFT_SIZE
+ * @property {number} STATE_SIZE
  */
 
 /** @type {Config} */
@@ -19,6 +20,7 @@ const defaults = {
   NOISE_SIZE: 512,
   NOISE_3D_SIZE: 128,
   ANALYSER_FFT_SIZE: 1024,
+  STATE_SIZE: 256,
 }
 
 export function loadConfig() {
