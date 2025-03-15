@@ -2,7 +2,7 @@
 // Check if MIDI data is being received, notes and CC will be displayed
 
 void main(){
-  vec2 sp = gl_FragCoord.xy / u_resolution.xy;
+  vec2 sp = screenPos;
 
   float notev = texture(u_midi_tex, sp).r;
   float cc = texture(u_midi_tex, sp).g;

@@ -4,8 +4,6 @@ precision highp float;
 precision highp int;
 precision highp sampler3D;
 
-const float PHI = 1.61803398874989484820459; // Φ = Golden Ratio 
-
 uniform vec2 u_resolution;  
 uniform float u_time;
 uniform float u_delta;
@@ -30,19 +28,16 @@ out vec4 fragColor;
 #define getState(INDEX) texture(u_state_tex, vec2(float(INDEX) / stateSize, 0.0)).r
 
 // Only works in state shader
-#define stateSetup fragColor = texture(u_state_tex, v_imgcoord);             
+#define stateSetup fragColor = texture(u_state_tex, v_imgcoord)
 // Only works in state shader
 #define setState(INDEX, VAL) if(int(v_imgcoord.x * stateSize) == INDEX) fragColor = vec4(VAL) 
 
-vec2 screenPos(float offset) {
-  vec2 screenPos = gl_FragCoord.xy / u_resolution.xy;
-  screenPos.x = (screenPos.x * u_aspect) - ((u_aspect - 1.0) / 2.0);
+// Other functions below
 
-  screenPos.y += offset;
-  screenPos.x += offset;
+#define screenPos gl_FragCoord.xy / u_resolution.xy
+#define screenPosAspect gl_FragCoord.xy / u_resolution.xy * vec2(u_aspect, 1.0) - vec2(0.5, 0.0)
 
-  return screenPos;
-}
+#define audioFreqData(INDEX) texture(u_analyser_tex, vec2(float(INDEX) / float(u_analyser_size), 0.0)).r
 
 vec3 hsv2rgb(float h, float s, float v)
 {
@@ -51,23 +46,10 @@ vec3 hsv2rgb(float h, float s, float v)
   return v * mix(vec3(t.x), clamp(p - vec3(t.x), 0.0, 1.0), s);
 }
 
-float audioFreqData(int binIndex) {
-  return texture(u_analyser_tex, vec2(float(binIndex) / float(u_analyser_size), 0.0)).r;
-}
-
-float goldNoise(in vec2 xy, in float seed) {
-  return fract(tan(distance(xy*PHI, xy)*seed)*xy.x);
-}
-
-float randGold(float r) {
-  float seed = u_time; 
-  return goldNoise(gl_FragCoord.xy, seed + r);
-}
-
 float randTex(float r) {
-  vec2 screenPos = gl_FragCoord.xy / u_resolution.xy;
+  vec2 sp = screenPos;
   float seed = fract(u_time + r);
-  return texture(u_rand_tex, screenPos+seed).r;
+  return texture(u_rand_tex, sp + seed).r;
 }
 
 float octaveNoise(vec2 pos, int octaves) {

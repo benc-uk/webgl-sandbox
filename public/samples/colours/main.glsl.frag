@@ -1,7 +1,7 @@
 // Swirling colors
 
 void main(){
-  vec2 sp = screenPos(0.0);
+  vec2 sp = screenPosAspect;
 
   // Each four corners of the screen has a different hue and the hue changes over time
   float cornerHue1 = (sp.x + sp.y) * 0.2 + u_time * 0.1;

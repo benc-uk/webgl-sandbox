@@ -26,6 +26,8 @@ const int numSpheres = 3;
 Sphere scene[numSpheres]; // The scene is composed of array of spheres
 
 void main() {
+  vec2 sp = screenPosAspect;
+
   // Light position based on mouse
   vec2 mouse = vec2(u_mouse.x - u_resolution.x/2.0, -u_mouse.y + u_resolution.y/2.0);
   vec3 lightPos = vec3(mouse * 0.15, 17.0);
@@ -40,12 +42,12 @@ void main() {
   scene[1] = Sphere(vec3(0.0, 1.0, 0.0), 2.0, vec3(0.8, 0.25, 0.2), 100.0);
   scene[2] = Sphere(vec3(0.0, -1.0, 0.0), 1.2, vec3(0.1, 0.7, 0.1), 6.0);
 
-  vec2 screenPos = screenPos(0.0);
+
 
   // Fire background effect using 3D noise for no good reson
   float z = abs(mod(u_time* 0.07, 2.0) - 1.0) ;
-  bgColor *= octaveNoise3(vec3(screenPos * 0.7, z), 10) * 2.3;
-  bgColor *= (1.2 - screenPos.y) * vec3(2.3, 0.2, 0.0);
+  bgColor *= octaveNoise3(vec3(sp * 0.7, z), 10) * 2.3;
+  bgColor *= (1.2 - sp.y) * vec3(2.3, 0.2, 0.0);
   
   // Rotate spheres around center each frame
   scene[0].position.y += 1.5 * sin(u_time*2.0);
@@ -57,7 +59,7 @@ void main() {
 
   // Create a ray, with origin and direction
   vec3 ro = vec3(0.0, 0.0, 22.0); // Camera position
-  vec3 rd = normalize(vec3(screenPos - 0.5, -0.9));
+  vec3 rd = normalize(vec3(sp - 0.5, -0.9));
   
   // Find closest hit distance and index of hit sphere
   float minT = 1e9;

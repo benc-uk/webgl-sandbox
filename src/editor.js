@@ -46,13 +46,13 @@ export async function initEditor(doneCallback, forceFileLoad) {
 
       await loadExample('raytracer')
       code = getCode('main')
+    } else {
+      code = tmpCode
     }
   }
 
   // Default for post-processing code
   if (getCode('post') === null) {
-    console.log('No post-processing code found, loading default...')
-
     localStorage.setItem('postCode', defaultPostShader)
   }
 
@@ -98,7 +98,7 @@ export async function initEditor(doneCallback, forceFileLoad) {
   if (!codeDiv) return
 
   editor = monaco.editor.create(codeDiv, {
-    value: code,
+    value: code || '',
     theme: 'custom',
     language: 'glsl',
     minimap: { enabled: false },

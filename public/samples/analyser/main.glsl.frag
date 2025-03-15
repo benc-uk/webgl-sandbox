@@ -1,7 +1,8 @@
 // Spectrum analyser and audio visualizer
 
 void main() {
-  vec2 sp = gl_FragCoord.xy / u_resolution.xy;
+  vec2 sp = screenPos;
+  
   sp.x = floor(sp.x * 45.0) / 45.0;
   
   float val = audioFreqData(int(sp.x * float(u_analyser_size)));

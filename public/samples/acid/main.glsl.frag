@@ -1,7 +1,7 @@
 // Acid trip
 
 void main(){
-  vec2 sp = screenPos(0.0);
+  vec2 sp = screenPosAspect;
 
   // Wobble zoom
   sp *= (sin(u_time * 0.8) * 0.01) + 0.05;
