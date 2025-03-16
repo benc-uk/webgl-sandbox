@@ -98,7 +98,7 @@ export async function initEditor(doneCallback, forceFileLoad) {
   if (!codeDiv) return
 
   editor = monaco.editor.create(codeDiv, {
-    value: code || '',
+    value: code ?? '',
     theme: 'custom',
     language: 'glsl',
     minimap: { enabled: false },

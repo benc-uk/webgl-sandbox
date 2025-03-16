@@ -24,6 +24,7 @@ Alpine.data('app', () => ({
   showCode: true,
   isFullscreen: false,
 
+  /** @type {Mode} */
   selectedMode: 'main',
 
   /** @type {MediaDeviceInfo[] | null} */
@@ -42,6 +43,7 @@ Alpine.data('app', () => ({
   samples: [
     { title: 'Blank', name: 'blank' },
     { title: 'Hypno circles', name: 'circles' },
+    { title: 'Maze Game', name: 'maze-game' },
     { title: 'Acid trip', name: 'acid' },
     { title: 'Colour Wave', name: 'colours' },
     { title: 'Raytracer', name: 'raytracer' },
@@ -107,9 +109,8 @@ Alpine.data('app', () => ({
         duration: 2000,
       }).showToast()
 
-      this.modeShader = 'main'
-
       rewind()
+      this.selectedMode = 'main'
     } catch (err) {
       Alpine.store('error', err.message)
     }
